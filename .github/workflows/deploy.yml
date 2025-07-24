@@ -1,0 +1,95 @@
+name: Deployment of Electricity Usage Monitor
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install PHP Dependencies
+        run: |
+          composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+          composer dump-autoload
+
+      - name: Install Node Dependencies
+        run: |
+          npm install
+
+      - name: Build Assets
+        run: |
+          npm run build
+
+      - name: Copy Environment File
+        run: |
+          cp .env.example .env
+
+      - name: Generate Application Key
+        run: |
+          php artisan key:generate --ansi
+
+      - name: Clear Config Cache
+        run: |
+          php artisan config:clear
+
+      - name: Install sshpass
+        run: sudo apt-get install -y sshpass
+
+      - name: Deploy to Production
+        if: github.ref == 'refs/heads/main'
+        run: |
+          sshpass -p 'c#)rgPMzNC2998@Vb4.M' rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ root@147.93.30.80:/var/www/electricity-usage/
+
+          sshpass -p 'c#)rgPMzNC2998@Vb4.M' ssh -o StrictHostKeyChecking=no root@147.93.30.80 << 'EOF'
+            cd /var/www/electricity-usage
+
+            # Set Permissions
+            chown -R www-data:www-data /var/www/electricity-usage
+            chmod -R 775 /var/www/electricity-usage/storage /var/www/electricity-usage/bootstrap/cache
+            chown -R www-data:www-data /var/www/electricity-usage/storage /var/www/electricity-usage/bootstrap/cache
+            chmod -R 777 /var/www/electricity-usage/storage /var/www/electricity-usage/bootstrap/cache
+
+            # Copy environment file if not exists
+            if [ ! -f .env ]; then
+              cp .env.example .env
+            fi
+
+            # Update database name in .env
+            sed -i 's/DB_DATABASE=laravel/DB_DATABASE=elec_usage/' .env
+
+            # Laravel Commands
+            php8.3 artisan key:generate --ansi --force
+            php8.3 artisan migrate --force
+            php8.3 artisan db:seed --class=ElectricityDataSeeder --force
+            php8.3 artisan optimize:clear
+            php8.3 artisan storage:link
+            php8.3 artisan config:clear
+            php8.3 artisan cache:clear
+            php8.3 artisan route:clear
+            php8.3 artisan view:clear
+            php8.3 artisan config:cache
+            php8.3 artisan route:cache
+            php8.3 artisan view:cache
+
+            # Restart services
+            systemctl reload nginx
+            systemctl restart php8.3-fpm
+          EOF

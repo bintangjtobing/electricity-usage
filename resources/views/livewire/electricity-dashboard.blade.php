@@ -1,0 +1,216 @@
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Dashboard Monitoring Listrik</h1>
+                <p class="text-gray-600 mt-2">Monitor penggunaan listrik Anda secara real-time</p>
+            </div>
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                <a href="{{ route('purchase') }}" 
+                   class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Input Pembelian
+                </a>
+                <a href="{{ route('check') }}" 
+                   class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                    </svg>
+                    Cek Sisa kWh
+                </a>
+                <button wire:click="refresh" 
+                        class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        @if($lastPurchase && $lastCheck)
+        
+        <!-- Status Indicator -->
+        <div class="mb-8">
+            <div class="rounded-xl shadow-2xl p-8 text-center transform transition-all duration-300 hover:scale-105 {{ $usageIndicatorColor }}">
+                <h2 class="text-2xl font-bold text-white mb-3">Status Penggunaan</h2>
+                <div class="text-6xl font-black text-white mb-3">{{ $usageIndicator }}</div>
+                <p class="text-xl text-white opacity-90">{{ number_format($dailyAverage, 2) }} kWh/hari</p>
+            </div>
+        </div>
+
+        <!-- Main Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Pembelian Terakhir -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Pembelian Terakhir</h3>
+                        <p class="text-3xl font-bold text-gray-900">{{ $lastPurchase->created_at->format('d/m/Y') }}</p>
+                        <p class="text-sm text-gray-500 mt-1">{{ $daysSinceLastPurchase }} hari yang lalu</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-full">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sisa Listrik -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Sisa Listrik (kWh)</h3>
+                        <p class="text-3xl font-bold text-gray-900">{{ number_format($remainingKwh, 2) }}</p>
+                        <p class="text-sm text-gray-500 mt-1">Update: {{ $lastCheck->created_at->format('d/m/Y H:i') }}</p>
+                    </div>
+                    <div class="p-3 bg-green-100 rounded-full">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Penggunaan Rata-rata -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Penggunaan Rata-rata</h3>
+                        <p class="text-3xl font-bold text-gray-900">{{ number_format($dailyAverage, 2) }}</p>
+                        <p class="text-sm text-gray-500 mt-1">kWh/hari</p>
+                    </div>
+                    <div class="p-3 bg-yellow-100 rounded-full">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Jumlah kWh Beli Terakhir -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">kWh Beli Terakhir</h3>
+                        <p class="text-3xl font-bold text-gray-900">{{ number_format($lastPurchase->kwh_bought, 2) }}</p>
+                        <p class="text-sm text-gray-500 mt-1">Rp {{ number_format($lastPurchase->purchase_price, 0, ',', '.') }}</p>
+                    </div>
+                    <div class="p-3 bg-purple-100 rounded-full">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- kWh Terpakai -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">kWh Terpakai</h3>
+                        <p class="text-3xl font-bold text-gray-900">{{ number_format($kwhUsed, 2) }}</p>
+                        <p class="text-sm text-gray-500 mt-1">{{ round(($kwhUsed / $lastPurchase->kwh_bought) * 100, 1) }}% dari pembelian</p>
+                    </div>
+                    <div class="p-3 bg-red-100 rounded-full">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sisa Hari -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Sisa Hari (Estimasi)</h3>
+                        <p class="text-3xl font-bold text-gray-900">{{ $dailyAverage > 0 ? round($remainingKwh / $dailyAverage, 0) : 0 }}</p>
+                        <p class="text-sm text-gray-500 mt-1">hari lagi</p>
+                    </div>
+                    <div class="p-3 bg-indigo-100 rounded-full">
+                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projections Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Proyeksi Bulanan -->
+            <div class="bg-white rounded-xl shadow-lg p-8 border-t-4 border-blue-500">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Proyeksi Bulanan
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700 font-medium">Penggunaan 1 Bulan:</span>
+                        <span class="text-xl font-bold text-gray-900">{{ number_format($monthlyProjection, 2) }} kWh</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700 font-medium">Biaya 1 Bulan:</span>
+                        <span class="text-xl font-bold text-green-600">Rp {{ number_format($monthlyCost, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700 font-medium">Frekuensi Beli Token:</span>
+                        <span class="text-xl font-bold text-blue-600">{{ number_format($tokenFrequency, 1) }}x per bulan</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analisa Bulanan -->
+            <div class="bg-white rounded-xl shadow-lg p-8 border-t-4 border-green-500">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                    Analisa Bulanan
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700 font-medium">Estimasi Bulan Depan:</span>
+                        <span class="text-xl font-bold text-gray-900">{{ number_format($nextMonthEstimate, 2) }} kWh</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700 font-medium">Estimasi Biaya:</span>
+                        <span class="text-xl font-bold text-green-600">Rp {{ number_format($nextMonthEstimate * $lastPurchase->price_per_unit, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700 font-medium">Proyeksi Sisa Bulanan:</span>
+                        <span class="text-xl font-bold text-blue-600">{{ number_format(max(0, $lastPurchase->kwh_bought - $monthlyProjection), 2) }} kWh</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @else
+        <!-- No Data State -->
+        <div class="text-center py-16">
+            <div class="bg-white rounded-xl shadow-lg p-12 max-w-md mx-auto">
+                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.34 15.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Belum Ada Data</h3>
+                <p class="text-gray-600 mb-6">Belum ada data pembelian atau pengecekan listrik. Silakan input data terlebih dahulu.</p>
+                <div class="space-x-4">
+                    <a href="{{ route('purchase') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition duration-300">
+                        Tambah Pembelian
+                    </a>
+                    <a href="{{ route('check') }}" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition duration-300">
+                        Cek Sisa
+                    </a>
+                </div>
+            </div>
+        </div>
+        @endif
+    </div>
+</div>
