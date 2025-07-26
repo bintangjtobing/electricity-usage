@@ -40,20 +40,20 @@ class ElectricityDashboard extends Component
         if ($this->lastPurchase && $this->lastCheck) {
             $this->remainingKwh = $this->lastCheck->kwh_remaining;
             
+            // Calculate days since last purchase to now
             $purchaseDate = Carbon::parse($this->lastPurchase->created_at);
-            $checkDate = Carbon::parse($this->lastCheck->created_at);
+            $now = Carbon::now();
+            $this->daysSinceLastPurchase = $purchaseDate->diffInDays($now);
             
-            $this->daysSinceLastPurchase = $purchaseDate->diffInDays($checkDate);
+            // Calculate actual usage from check history
+            $this->calculateActualUsage();
             
-            if ($this->daysSinceLastPurchase > 0) {
-                $this->kwhUsed = $this->lastPurchase->kwh_bought - $this->remainingKwh;
-                $this->dailyAverage = round($this->kwhUsed / $this->daysSinceLastPurchase, 2);
-                
+            if ($this->dailyAverage > 0) {
                 $this->monthlyProjection = round($this->dailyAverage * 30, 2);
                 $this->monthlyCost = round($this->monthlyProjection * $this->lastPurchase->price_per_unit, 2);
                 
                 if ($this->lastPurchase->kwh_bought > 0) {
-                    $this->tokenFrequency = round(30 / ($this->lastPurchase->kwh_bought / $this->dailyAverage), 2);
+                    $this->tokenFrequency = round($this->monthlyProjection / $this->lastPurchase->kwh_bought, 2);
                 }
                 
                 $historicalUsage = $this->getHistoricalDailyAverage();
@@ -64,30 +64,75 @@ class ElectricityDashboard extends Component
         }
     }
 
+    private function calculateActualUsage()
+    {
+        // Get usage checks ordered by date
+        $checks = ElectricityUsageCheck::orderBy('created_at', 'asc')->get();
+        
+        if ($checks->count() < 2) {
+            $this->kwhUsed = 0;
+            $this->dailyAverage = 0;
+            return;
+        }
+        
+        $totalUsage = 0;
+        $totalDays = 0;
+        
+        // Calculate usage between consecutive checks
+        for ($i = 1; $i < $checks->count(); $i++) {
+            $prevCheck = $checks[$i - 1];
+            $currCheck = $checks[$i];
+            
+            $prevKwh = $prevCheck->kwh_remaining;
+            $currKwh = $currCheck->kwh_remaining;
+            
+            // If current kWh is higher than previous, a purchase was made
+            if ($currKwh > $prevKwh) {
+                // Find purchase between these checks
+                $purchase = ElectricityPurchase::where('created_at', '>', $prevCheck->created_at)
+                    ->where('created_at', '<=', $currCheck->created_at)
+                    ->first();
+                    
+                if ($purchase) {
+                    // Usage = previous remaining - minimum before purchase + usage after purchase
+                    $usageBeforePurchase = $prevKwh - ($currKwh - $purchase->kwh_bought);
+                    $totalUsage += max(0, $usageBeforePurchase);
+                }
+            } else {
+                // Normal usage (no purchase)
+                $usage = $prevKwh - $currKwh;
+                $totalUsage += max(0, $usage);
+            }
+            
+            $days = Carbon::parse($prevCheck->created_at)->diffInDays(Carbon::parse($currCheck->created_at));
+            $totalDays += $days;
+        }
+        
+        // Calculate total kWh used from all purchases
+        $allPurchases = ElectricityPurchase::sum('kwh_bought');
+        $this->kwhUsed = max(0, $allPurchases - $this->remainingKwh);
+        
+        // Calculate daily average
+        if ($totalDays > 0) {
+            $this->dailyAverage = round($totalUsage / $totalDays, 2);
+        } else {
+            // Fallback: use first and last check
+            $firstCheck = $checks->first();
+            $lastCheck = $checks->last();
+            $daysBetween = Carbon::parse($firstCheck->created_at)->diffInDays(Carbon::parse($lastCheck->created_at));
+            
+            if ($daysBetween > 0) {
+                $this->dailyAverage = round($this->kwhUsed / $daysBetween, 2);
+            } else {
+                $this->dailyAverage = 0;
+            }
+        }
+    }
+    
     private function getHistoricalDailyAverage()
     {
-        $purchases = ElectricityPurchase::orderBy('created_at', 'desc')->take(3)->get();
-        $checks = ElectricityUsageCheck::orderBy('created_at', 'desc')->take(10)->get();
-        
-        if ($purchases->count() < 2 || $checks->count() < 2) {
-            return $this->dailyAverage ?? 7;
-        }
-
-        $totalDays = 0;
-        $totalUsage = 0;
-
-        for ($i = 0; $i < $purchases->count() - 1; $i++) {
-            $purchase1 = $purchases[$i];
-            $purchase2 = $purchases[$i + 1];
-            
-            $days = Carbon::parse($purchase1->created_at)->diffInDays(Carbon::parse($purchase2->created_at));
-            $usage = $purchase2->kwh_bought;
-            
-            $totalDays += $days;
-            $totalUsage += $usage;
-        }
-
-        return $totalDays > 0 ? round($totalUsage / $totalDays, 2) : $this->dailyAverage;
+        // Return the calculated daily average from actual usage
+        return $this->dailyAverage ?? 0;
     }
 
     private function setUsageIndicator($dailyUsage)
