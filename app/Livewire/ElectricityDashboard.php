@@ -21,6 +21,7 @@ class ElectricityDashboard extends Component
     public $nextMonthEstimate;
     public $usageIndicator;
     public $usageIndicatorColor;
+    public $projectionToPayday;
     
     protected $listeners = ['refresh-dashboard' => 'refresh'];
     
@@ -62,7 +63,26 @@ class ElectricityDashboard extends Component
                 $this->nextMonthEstimate = round($historicalUsage * 30, 2);
                 
                 $this->setUsageIndicator($this->dailyAverage);
+                $this->calculateProjectionToPayday();
+            } else {
+                // Set default values if no daily average
+                $this->projectionToPayday = [
+                    'targetMonth' => Carbon::now()->format('F'),
+                    'daysUntilPayday' => 0,
+                    'projectedUsage' => 0,
+                    'remainingKwh' => $this->remainingKwh,
+                    'needToBuy' => false
+                ];
             }
+        } else {
+            // Set default values if no data
+            $this->projectionToPayday = [
+                'targetMonth' => Carbon::now()->format('F'),
+                'daysUntilPayday' => 0,
+                'projectedUsage' => 0,
+                'remainingKwh' => 0,
+                'needToBuy' => false
+            ];
         }
     }
 
@@ -149,6 +169,38 @@ class ElectricityDashboard extends Component
             $this->usageIndicator = 'BOROS';
             $this->usageIndicatorColor = 'bg-red-500';
         }
+    }
+    
+    private function calculateProjectionToPayday()
+    {
+        $now = Carbon::now();
+        $currentDay = $now->day;
+        
+        // Calculate target date (10th of next month if current date is after 10th)
+        if ($currentDay <= 10) {
+            $targetDate = Carbon::create($now->year, $now->month, 10);
+            $targetMonth = $now->format('F');
+        } else {
+            $targetDate = Carbon::create($now->year, $now->month, 10)->addMonth();
+            $targetMonth = $targetDate->format('F');
+        }
+        
+        // Calculate days until payday
+        $daysUntilPayday = $now->diffInDays($targetDate);
+        
+        // Calculate projected usage until payday
+        $projectedUsage = $this->dailyAverage * $daysUntilPayday;
+        
+        // Calculate remaining kWh on payday
+        $remainingOnPayday = $this->remainingKwh - $projectedUsage;
+        
+        $this->projectionToPayday = [
+            'targetMonth' => $targetMonth,
+            'daysUntilPayday' => $daysUntilPayday,
+            'projectedUsage' => round($projectedUsage, 2),
+            'remainingKwh' => round($remainingOnPayday, 2),
+            'needToBuy' => $remainingOnPayday < 20 // If less than 20 kWh, likely need to buy before payday
+        ];
     }
 
     public function render()

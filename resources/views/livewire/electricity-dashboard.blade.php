@@ -33,6 +33,43 @@
 
         @if($lastPurchase && $lastCheck)
         
+        <!-- AI Assistant Message -->
+        <div class="mb-8">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Hai Bintang & Ayu! 👋</h3>
+                        <p class="text-gray-700 leading-relaxed">
+                            Saya adalah assistant pribadi untuk mengecek semua penggunaan listrik token di Kos Bali kamu saat ini. 
+                            Saya melihat bahwa kamu membeli token terakhir kali tanggal <span class="font-semibold">{{ $lastPurchase->created_at->format('d/m/Y') }}</span>, 
+                            dengan sisa listrik (kWh) sebesar <span class="font-semibold">{{ number_format($remainingKwh, 2) }}</span>.
+                        </p>
+                        <p class="text-gray-700 leading-relaxed mt-3">
+                            Saya merasa bahwa penggunaan harian rata-rata kamu sebesar <span class="font-semibold {{ $dailyAverage > 10 ? 'text-red-600' : ($dailyAverage > 7 ? 'text-yellow-600' : 'text-green-600') }}">{{ number_format($dailyAverage, 2) }} kWh</span>, 
+                            yang berarti ini <span class="font-semibold {{ $dailyAverage > 10 ? 'text-red-600' : ($dailyAverage > 7 ? 'text-yellow-600' : 'text-green-600') }}">
+                            {{ $dailyAverage > 10 ? 'cukup boros' : ($dailyAverage > 7 ? 'standar' : 'hemat') }}</span> untukmu.
+                        </p>
+                        <p class="text-gray-700 leading-relaxed mt-3">
+                            Dengan sisa {{ number_format($remainingKwh, 2) }} kWh, untuk sampai tanggal 10 di bulan {{ $projectionToPayday['targetMonth'] }}, 
+                            itu akan bersisa sekitar <span class="font-semibold {{ $projectionToPayday['remainingKwh'] < 20 ? 'text-red-600' : 'text-green-600' }}">{{ number_format($projectionToPayday['remainingKwh'], 2) }} kWh</span>, 
+                            namun ini hanya kemungkinan perhitungannya. Yang harus kamu tau, sisa hari estimasi untuk sisa kWh tersebut, 
+                            sekitar <span class="font-semibold">{{ round($remainingKwh / $dailyAverage, 0) }} hari lagi</span>.
+                            @if($projectionToPayday['needToBuy'])
+                            <span class="text-red-600 font-semibold">⚠️ Kemungkinan kamu perlu beli token sebelum tanggal gajian!</span>
+                            @endif
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Status Indicator -->
         <div class="mb-8">
             <div class="rounded-xl shadow-2xl p-8 text-center transform transition-all duration-300 hover:scale-105 {{ $usageIndicatorColor }}">
