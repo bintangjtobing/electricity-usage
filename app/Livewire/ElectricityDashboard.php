@@ -22,6 +22,8 @@ class ElectricityDashboard extends Component
     public $usageIndicator;
     public $usageIndicatorColor;
     
+    protected $listeners = ['refresh-dashboard' => 'refresh'];
+    
     public function mount()
     {
         $this->calculateAnalytics();
