@@ -214,8 +214,9 @@ class ElectricityDashboard extends Component
         $labels = [];
         $kwhData = [];
         $purchaseData = [];
+        $dailyUsageData = [];
 
-        foreach ($checks as $check) {
+        foreach ($checks as $index => $check) {
             $labels[] = Carbon::parse($check->created_at)->format('d M');
             $kwhData[] = $check->kwh_remaining;
 
@@ -225,12 +226,36 @@ class ElectricityDashboard extends Component
             });
 
             $purchaseData[] = $purchase ? $purchase->kwh_bought : null;
+
+            // Calculate daily usage
+            if ($index > 0) {
+                $prevCheck = $checks[$index - 1];
+                $currentKwh = $check->kwh_remaining;
+                $prevKwh = $prevCheck->kwh_remaining;
+
+                // If current > previous, there was a purchase - calculate usage before purchase
+                if ($purchase) {
+                    $usageBeforePurchase = $prevKwh - ($currentKwh - $purchase->kwh_bought);
+                    $days = Carbon::parse($prevCheck->created_at)->diffInDays(Carbon::parse($check->created_at));
+                    $dailyUsage = $days > 0 ? round($usageBeforePurchase / $days, 2) : 0;
+                    $dailyUsageData[] = max(0, $dailyUsage);
+                } else {
+                    // Normal usage calculation
+                    $usage = $prevKwh - $currentKwh;
+                    $days = Carbon::parse($prevCheck->created_at)->diffInDays(Carbon::parse($check->created_at));
+                    $dailyUsage = $days > 0 ? round($usage / $days, 2) : 0;
+                    $dailyUsageData[] = max(0, $dailyUsage);
+                }
+            } else {
+                $dailyUsageData[] = 0; // First data point has no previous to compare
+            }
         }
 
         $this->chartData = [
             'labels' => $labels,
             'kwh' => $kwhData,
             'purchases' => $purchaseData,
+            'dailyUsage' => $dailyUsageData,
         ];
     }
 

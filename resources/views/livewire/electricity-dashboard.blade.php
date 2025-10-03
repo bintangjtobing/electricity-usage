@@ -116,16 +116,32 @@
                             }, {
                                 label: 'Pembelian Token (kWh)',
                                 data: @json($chartData['purchases'] ?? []),
-                                borderColor: 'rgb(34, 197, 94)',
-                                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                                borderColor: 'rgb(245, 158, 11)',
+                                backgroundColor: 'rgb(245, 158, 11)',
                                 borderWidth: 0,
-                                pointRadius: 8,
-                                pointHoverRadius: 10,
-                                pointBackgroundColor: 'rgb(34, 197, 94)',
+                                pointRadius: 12,
+                                pointHoverRadius: 15,
+                                pointBackgroundColor: 'rgb(245, 158, 11)',
+                                pointBorderColor: 'rgb(217, 119, 6)',
+                                pointBorderWidth: 4,
+                                pointStyle: 'rectRot',
+                                showLine: false,
+                                order: 0
+                            }, {
+                                label: 'Penggunaan Harian (kWh/hari)',
+                                data: @json($chartData['dailyUsage'] ?? []),
+                                borderColor: 'rgb(239, 68, 68)',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.3,
+                                fill: false,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                pointBackgroundColor: 'rgb(239, 68, 68)',
                                 pointBorderColor: '#fff',
-                                pointBorderWidth: 3,
-                                pointStyle: 'star',
-                                showLine: false
+                                pointBorderWidth: 2,
+                                borderDash: [5, 5],
+                                yAxisID: 'y1'
                             }]
                         },
                         options: {
@@ -174,17 +190,56 @@
                             },
                             scales: {
                                 y: {
+                                    type: 'linear',
+                                    position: 'left',
                                     beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: 'Sisa kWh',
+                                        font: {
+                                            size: 12,
+                                            weight: 'bold'
+                                        },
+                                        color: 'rgb(59, 130, 246)'
+                                    },
                                     ticks: {
                                         callback: function(value) {
                                             return value + ' kWh';
                                         },
                                         font: {
                                             size: 11
-                                        }
+                                        },
+                                        color: 'rgb(59, 130, 246)'
                                     },
                                     grid: {
-                                        color: 'rgba(0, 0, 0, 0.05)'
+                                        color: 'rgba(59, 130, 246, 0.1)'
+                                    }
+                                },
+                                y1: {
+                                    type: 'linear',
+                                    position: 'right',
+                                    beginAtZero: true,
+                                    max: 20,
+                                    title: {
+                                        display: true,
+                                        text: 'Penggunaan Harian (kWh/hari)',
+                                        font: {
+                                            size: 12,
+                                            weight: 'bold'
+                                        },
+                                        color: 'rgb(239, 68, 68)'
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value + ' kWh/hari';
+                                        },
+                                        font: {
+                                            size: 11
+                                        },
+                                        color: 'rgb(239, 68, 68)'
+                                    },
+                                    grid: {
+                                        drawOnChartArea: false
                                     }
                                 },
                                 x: {
