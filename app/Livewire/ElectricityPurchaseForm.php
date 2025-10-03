@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\ElectricityPurchase;
+use App\Models\ElectricityUsageCheck;
 use Livewire\Component;
 
 class ElectricityPurchaseForm extends Component
@@ -52,6 +53,7 @@ class ElectricityPurchaseForm extends Component
     {
         $this->validate();
 
+        // Create purchase record
         ElectricityPurchase::create([
             'meter_number' => $this->meter_number,
             'owner_name' => $this->owner_name,
@@ -61,8 +63,26 @@ class ElectricityPurchaseForm extends Component
             'price_per_unit' => $this->price_per_unit
         ]);
 
+        // Get last usage check
+        $lastCheck = ElectricityUsageCheck::where('meter_number', $this->meter_number)
+            ->latest()
+            ->first();
+
+        // Calculate new kWh remaining (last check + purchased kWh)
+        $lastKwhRemaining = $lastCheck ? $lastCheck->kwh_remaining : 0;
+        $newKwhRemaining = $lastKwhRemaining + $this->kwh_bought;
+
+        // Auto-create new usage check with updated remaining
+        ElectricityUsageCheck::create([
+            'meter_number' => $this->meter_number,
+            'kwh_remaining' => $newKwhRemaining,
+        ]);
+
         session()->flash('message', 'Pembelian listrik berhasil dicatat!');
         $this->reset(['purchase_price', 'purchase_price_formatted', 'kwh_bought']);
+
+        // Refresh dashboard
+        $this->dispatch('refresh-dashboard');
     }
 
     public function render()

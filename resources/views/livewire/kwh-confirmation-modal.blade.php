@@ -17,9 +17,22 @@
                 <!-- Question -->
                 <div class="mb-6">
                     <p class="text-gray-700 mb-2">Halo! 👋</p>
-                    <p class="text-gray-700 mb-4">Apakah sisa listrik Anda hari ini masih <span class="font-bold text-blue-600">{{ number_format($lastKwhValue, 2) }} kWh</span>?</p>
+                    <p class="text-gray-700 mb-4">
+                        Apakah sisa listrik Anda hari ini masih
+                        <span class="font-bold text-blue-600">{{ number_format($predictedKwhValue, 2) }} kWh</span>?
+                    </p>
                     @if($hoursSinceLastCheck > 0)
                     <p class="text-sm text-gray-500">Terakhir dicek {{ $hoursSinceLastCheck }} jam yang lalu</p>
+                    @endif
+                    @if($dailyAverage > 0 && $hoursSinceLastCheck > 0)
+                    <div class="mt-2 p-3 bg-blue-50 rounded-lg text-sm text-gray-600">
+                        <p class="mb-1">📊 <strong>Estimasi berdasarkan:</strong></p>
+                        <ul class="ml-4 space-y-1">
+                            <li>• Sisa terakhir: {{ number_format($lastKwhValue, 2) }} kWh</li>
+                            <li>• Penggunaan rata-rata: {{ number_format($dailyAverage, 2) }} kWh/hari</li>
+                            <li>• Estimasi penggunaan: {{ number_format($dailyAverage * ($hoursSinceLastCheck / 24), 2) }} kWh ({{ $hoursSinceLastCheck }} jam)</li>
+                        </ul>
+                    </div>
                     @endif
                 </div>
 
