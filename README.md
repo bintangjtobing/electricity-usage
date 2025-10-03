@@ -10,7 +10,7 @@ Aplikasi monitoring penggunaan listrik token pribadi untuk membantu tracking kon
 ## 🌟 Fitur Utama
 
 ### 🤖 **AI Assistant Personal**
-- **Personal Greeting**: Sapaan khusus untuk Bintang & Ayu
+- **Personal Greeting**: Sapaan khusus untuk Bintang
 - **Analisa Cerdas**: Memberikan insight tentang pola penggunaan listrik
 - **Proyeksi ke Gajian**: Perhitungan sisa kWh sampai tanggal 10 (tanggal gajian)
 - **Rekomendasi**: Saran apakah perlu beli token sebelum gajian

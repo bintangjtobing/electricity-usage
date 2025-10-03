@@ -8,7 +8,7 @@ dan project ini menggunakan [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2025-07-26
 
 ### 🎉 Added
-- **AI Assistant Personal**: Fitur AI yang memberikan sapaan personal untuk Bintang & Ayu dengan analisa penggunaan listrik
+- **AI Assistant Personal**: Fitur AI yang memberikan sapaan personal untuk Bintang dengan analisa penggunaan listrik
 - **Proyeksi ke Tanggal Gajian**: Perhitungan otomatis sisa kWh sampai tanggal 10 (tanggal gajian) dengan warning jika perlu beli token
 - **Smart kWh Confirmation Modal**: Modal konfirmasi otomatis yang muncul saat user membuka aplikasi untuk update sisa kWh
 - **Opsi Respon Modal**: 3 pilihan respon (Ya/Tidak/Tanya Nanti) dengan input field untuk nilai baru
