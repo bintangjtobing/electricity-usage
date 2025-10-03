@@ -18,7 +18,7 @@ jobs:
 
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.3"
+          php-version: "8.2"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -76,20 +76,18 @@ jobs:
             sed -i 's/DB_DATABASE=laravel/DB_DATABASE=elec_usage/' .env
 
             # Laravel Commands
-            php8.3 artisan key:generate --ansi --force
-            php8.3 artisan migrate --force
-            php8.3 artisan db:seed --class=ElectricityDataSeeder --force
-            php8.3 artisan optimize:clear
-            php8.3 artisan storage:link
-            php8.3 artisan config:clear
-            php8.3 artisan cache:clear
-            php8.3 artisan route:clear
-            php8.3 artisan view:clear
-            php8.3 artisan config:cache
-            php8.3 artisan route:cache
-            php8.3 artisan view:cache
+            php8.2 artisan key:generate --ansi --force
+            php8.2 artisan migrate --force
+            php8.2 artisan optimize:clear
+            php8.2 artisan storage:link
+            php8.2 artisan config:clear
+            php8.2 artisan cache:clear
+            php8.2 artisan route:clear
+            php8.2 artisan view:clear
+            php8.2 artisan config:cache
+            php8.2 artisan route:cache
+            php8.2 artisan view:cache
 
             # Restart services
             systemctl reload nginx
-            systemctl restart php8.3-fpm
           EOF
