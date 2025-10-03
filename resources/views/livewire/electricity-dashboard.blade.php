@@ -1,10 +1,10 @@
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-gray-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Dashboard Monitoring Listrik</h1>
-                <p class="text-gray-600 mt-2">Monitor penggunaan listrik Anda secara real-time</p>
+                <h1 class="text-3xl font-bold text-white">Dashboard Monitoring Listrik</h1>
+                <p class="text-gray-400 mt-2">Monitor penggunaan listrik Anda secara real-time</p>
             </div>
             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                 <a href="{{ route('purchase') }}"
@@ -40,7 +40,7 @@
 
         <!-- AI Assistant Message -->
         <div class="mb-8">
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+            <div class="bg-gradient-to-r from-gray-800 to-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
                 <div class="flex items-start space-x-4">
                     <div class="flex-shrink-0">
                         <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
@@ -51,8 +51,8 @@
                         </div>
                     </div>
                     <div class="flex-1">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Hai Bintang! 👋</h3>
-                        <p class="text-gray-700 leading-relaxed">
+                        <h3 class="text-lg font-semibold text-white mb-2">Hai Bintang! 👋</h3>
+                        <p class="text-gray-300 leading-relaxed">
                             Saya adalah assistant pribadi untuk mengecek semua penggunaan listrik token di Kos Bali kamu
                             saat ini.
                             Saya melihat bahwa kamu membeli token terakhir kali tanggal <span class="font-semibold">{{
@@ -60,27 +60,27 @@
                             dengan sisa listrik (kWh) sebesar <span class="font-semibold">{{
                                 number_format($remainingKwh, 2) }}</span>.
                         </p>
-                        <p class="text-gray-700 leading-relaxed mt-3">
+                        <p class="text-gray-300 leading-relaxed mt-3">
                             Saya merasa bahwa penggunaan harian rata-rata kamu sebesar <span
-                                class="font-semibold {{ $dailyAverage > 10 ? 'text-red-600' : ($dailyAverage > 7 ? 'text-yellow-600' : 'text-green-600') }}">{{
+                                class="font-semibold {{ $dailyAverage > 10 ? 'text-red-400' : ($dailyAverage > 7 ? 'text-yellow-400' : 'text-green-400') }}">{{
                                 number_format($dailyAverage, 2) }} kWh</span>,
                             yang berarti ini <span
-                                class="font-semibold {{ $dailyAverage > 10 ? 'text-red-600' : ($dailyAverage > 7 ? 'text-yellow-600' : 'text-green-600') }}">
+                                class="font-semibold {{ $dailyAverage > 10 ? 'text-red-400' : ($dailyAverage > 7 ? 'text-yellow-400' : 'text-green-400') }}">
                                 {{ $dailyAverage > 10 ? 'cukup boros' : ($dailyAverage > 7 ? 'standar' : 'hemat')
                                 }}</span> untukmu.
                         </p>
-                        <p class="text-gray-700 leading-relaxed mt-3">
+                        <p class="text-gray-300 leading-relaxed mt-3">
                             Dengan sisa {{ number_format($remainingKwh, 2) }} kWh, untuk sampai tanggal 10 di bulan {{
                             $projectionToPayday['targetMonth'] }},
                             itu akan bersisa sekitar <span
-                                class="font-semibold {{ $projectionToPayday['remainingKwh'] < 20 ? 'text-red-600' : 'text-green-600' }}">{{
+                                class="font-semibold {{ $projectionToPayday['remainingKwh'] < 20 ? 'text-red-400' : 'text-green-400' }}">{{
                                 number_format($projectionToPayday['remainingKwh'], 2) }} kWh</span>,
                             namun ini hanya kemungkinan perhitungannya. Yang harus kamu tau, sisa hari estimasi untuk
                             sisa kWh tersebut,
                             sekitar <span class="font-semibold">{{ round($remainingKwh / $dailyAverage, 0) }} hari
                                 lagi</span>.
                             @if($projectionToPayday['needToBuy'])
-                            <span class="text-red-600 font-semibold">⚠️ Kemungkinan kamu perlu beli token sebelum
+                            <span class="text-red-400 font-semibold">⚠️ Kemungkinan kamu perlu beli token sebelum
                                 tanggal gajian!</span>
                             @endif
                         </p>
@@ -91,17 +91,17 @@
 
         <!-- Usage Chart -->
         <div class="mb-8">
-            <div class="bg-white rounded-xl shadow-2xl p-8">
+            <div class="bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-700">
                 <div class="flex items-center justify-between mb-6">
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-900">Grafik Penggunaan Listrik</h2>
-                        <p class="text-gray-600 mt-1">Tracking sisa kWh dan pembelian token</p>
+                        <h2 class="text-2xl font-bold text-white">Grafik Penggunaan Listrik</h2>
+                        <p class="text-gray-400 mt-1">Tracking sisa kWh dan pembelian token</p>
                     </div>
                     <div class="text-right">
                         <div class="inline-block px-4 py-2 rounded-lg {{ $usageIndicatorColor }}">
                             <span class="text-white font-bold">{{ $usageIndicator }}</span>
                         </div>
-                        <p class="text-sm text-gray-600 mt-1">{{ number_format($dailyAverage, 2) }} kWh/hari</p>
+                        <p class="text-sm text-gray-400 mt-1">{{ number_format($dailyAverage, 2) }} kWh/hari</p>
                     </div>
                 </div>
                 <div class="relative h-96">
@@ -180,7 +180,8 @@
                                         font: {
                                             size: 12,
                                             weight: 'bold'
-                                        }
+                                        },
+                                        color: '#d1d5db'
                                     }
                                 },
                                 tooltip: {
@@ -219,7 +220,7 @@
                                             size: 12,
                                             weight: 'bold'
                                         },
-                                        color: 'rgb(59, 130, 246)'
+                                        color: 'rgb(96, 165, 250)'
                                     },
                                     ticks: {
                                         callback: function(value) {
@@ -228,10 +229,10 @@
                                         font: {
                                             size: 11
                                         },
-                                        color: 'rgb(59, 130, 246)'
+                                        color: '#9ca3af'
                                     },
                                     grid: {
-                                        color: 'rgba(59, 130, 246, 0.1)'
+                                        color: 'rgba(75, 85, 99, 0.3)'
                                     }
                                 },
                                 y1: {
@@ -246,7 +247,7 @@
                                             size: 12,
                                             weight: 'bold'
                                         },
-                                        color: 'rgb(239, 68, 68)'
+                                        color: 'rgb(248, 113, 113)'
                                     },
                                     ticks: {
                                         callback: function(value) {
@@ -255,7 +256,7 @@
                                         font: {
                                             size: 11
                                         },
-                                        color: 'rgb(239, 68, 68)'
+                                        color: '#9ca3af'
                                     },
                                     grid: {
                                         drawOnChartArea: false
@@ -270,7 +271,8 @@
                                             size: 11
                                         },
                                         maxRotation: 45,
-                                        minRotation: 45
+                                        minRotation: 45,
+                                        color: '#9ca3af'
                                     }
                                 }
                             }
@@ -289,12 +291,12 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <!-- Pembelian Terakhir -->
             <div
-                class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow duration-300">
+                class="bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow duration-300 border border-gray-700">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Pembelian Terakhir</h3>
-                        <p class="text-3xl font-bold text-gray-900">{{ $lastPurchase->created_at->format('d/m/Y') }}</p>
-                        <p class="text-sm text-gray-500 mt-1">{{ $daysSinceLastPurchase }} hari yang lalu</p>
+                        <h3 class="text-lg font-semibold text-gray-300 mb-2">Pembelian Terakhir</h3>
+                        <p class="text-3xl font-bold text-white">{{ $lastPurchase->created_at->format('d/m/Y') }}</p>
+                        <p class="text-sm text-gray-400 mt-1">{{ $daysSinceLastPurchase }} hari yang lalu</p>
                     </div>
                     <div class="p-3 bg-blue-100 rounded-full">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -308,12 +310,12 @@
 
             <!-- Sisa Listrik -->
             <div
-                class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow duration-300">
+                class="bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Sisa Listrik (kWh)</h3>
-                        <p class="text-3xl font-bold text-gray-900">{{ number_format($remainingKwh, 2) }}</p>
-                        <p class="text-sm text-gray-500 mt-1">Update: {{ $lastCheck->created_at->format('d/m/Y H:i') }}
+                        <h3 class="text-lg font-semibold text-gray-300 mb-2">Sisa Listrik (kWh)</h3>
+                        <p class="text-3xl font-bold text-white">{{ number_format($remainingKwh, 2) }}</p>
+                        <p class="text-sm text-gray-400 mt-1">Update: {{ $lastCheck->created_at->format('d/m/Y H:i') }}
                         </p>
                     </div>
                     <div class="p-3 bg-green-100 rounded-full">
@@ -327,12 +329,12 @@
 
             <!-- Penggunaan Rata-rata -->
             <div
-                class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow duration-300">
+                class="bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Penggunaan Rata-rata</h3>
-                        <p class="text-3xl font-bold text-gray-900">{{ number_format($dailyAverage, 2) }}</p>
-                        <p class="text-sm text-gray-500 mt-1">kWh/hari</p>
+                        <h3 class="text-lg font-semibold text-gray-300 mb-2">Penggunaan Rata-rata</h3>
+                        <p class="text-3xl font-bold text-white">{{ number_format($dailyAverage, 2) }}</p>
+                        <p class="text-sm text-gray-400 mt-1">kWh/hari</p>
                     </div>
                     <div class="p-3 bg-yellow-100 rounded-full">
                         <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -346,13 +348,13 @@
 
             <!-- Jumlah kWh Beli Terakhir -->
             <div
-                class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow duration-300">
+                class="bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">kWh Beli Terakhir</h3>
-                        <p class="text-3xl font-bold text-gray-900">{{ number_format($lastPurchase->kwh_bought, 2) }}
+                        <h3 class="text-lg font-semibold text-gray-300 mb-2">kWh Beli Terakhir</h3>
+                        <p class="text-3xl font-bold text-white">{{ number_format($lastPurchase->kwh_bought, 2) }}
                         </p>
-                        <p class="text-sm text-gray-500 mt-1">Rp {{ number_format($lastPurchase->purchase_price, 0, ',',
+                        <p class="text-sm text-gray-400 mt-1">Rp {{ number_format($lastPurchase->purchase_price, 0, ',',
                             '.') }}</p>
                     </div>
                     <div class="p-3 bg-purple-100 rounded-full">
@@ -366,12 +368,12 @@
 
             <!-- kWh Terpakai -->
             <div
-                class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-xl transition-shadow duration-300">
+                class="bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-xl transition-shadow duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">kWh Terpakai</h3>
-                        <p class="text-3xl font-bold text-gray-900">{{ number_format($kwhUsed, 2) }}</p>
-                        <p class="text-sm text-gray-500 mt-1">{{ round(($kwhUsed / $totalPurchased) * 100, 1) }}% dari
+                        <h3 class="text-lg font-semibold text-gray-300 mb-2">kWh Terpakai</h3>
+                        <p class="text-3xl font-bold text-white">{{ number_format($kwhUsed, 2) }}</p>
+                        <p class="text-sm text-gray-400 mt-1">{{ round(($kwhUsed / $totalPurchased) * 100, 1) }}% dari
                             total pembelian ({{ number_format($totalPurchased, 2) }} kWh)</p>
                     </div>
                     <div class="p-3 bg-red-100 rounded-full">
@@ -385,13 +387,13 @@
 
             <!-- Sisa Hari -->
             <div
-                class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500 hover:shadow-xl transition-shadow duration-300">
+                class="bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-indigo-500 hover:shadow-xl transition-shadow duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Sisa Hari (Estimasi)</h3>
-                        <p class="text-3xl font-bold text-gray-900">{{ $dailyAverage > 0 ? round($remainingKwh /
+                        <h3 class="text-lg font-semibold text-gray-300 mb-2">Sisa Hari (Estimasi)</h3>
+                        <p class="text-3xl font-bold text-white">{{ $dailyAverage > 0 ? round($remainingKwh /
                             $dailyAverage, 0) : 0 }}</p>
-                        <p class="text-sm text-gray-500 mt-1">hari lagi</p>
+                        <p class="text-sm text-gray-400 mt-1">hari lagi</p>
                     </div>
                     <div class="p-3 bg-indigo-100 rounded-full">
                         <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,8 +408,8 @@
         <!-- Projections Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- Proyeksi Bulanan -->
-            <div class="bg-white rounded-xl shadow-lg p-8 border-t-4 border-blue-500">
-                <h3 class="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+            <div class="bg-gray-800 rounded-xl shadow-lg p-8 border-t-4 border-blue-500">
+                <h3 class="text-2xl font-bold text-white mb-2 flex items-center">
                     <svg class="w-6 h-6 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
@@ -415,73 +417,73 @@
                     </svg>
                     Proyeksi Bulanan
                 </h3>
-                <p class="text-sm text-gray-500 mb-6">Estimasi berdasarkan penggunaan rata-rata {{
+                <p class="text-sm text-gray-400 mb-6">Estimasi berdasarkan penggunaan rata-rata {{
                     number_format($dailyAverage, 2) }} kWh/hari</p>
                 <div class="space-y-4">
-                    <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="p-4 bg-gray-700 rounded-lg">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-gray-700 font-medium">Penggunaan 1 Bulan:</span>
-                            <span class="text-xl font-bold text-gray-900">{{ number_format($monthlyProjection, 2) }}
+                            <span class="text-gray-300 font-medium">Penggunaan 1 Bulan:</span>
+                            <span class="text-xl font-bold text-white">{{ number_format($monthlyProjection, 2) }}
                                 kWh</span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">{{ number_format($dailyAverage, 2) }} kWh/hari × 30 hari
+                        <p class="text-xs text-gray-400 mt-1">{{ number_format($dailyAverage, 2) }} kWh/hari × 30 hari
                         </p>
                     </div>
-                    <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="p-4 bg-gray-700 rounded-lg">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-gray-700 font-medium">Biaya 1 Bulan:</span>
+                            <span class="text-gray-300 font-medium">Biaya 1 Bulan:</span>
                             <span class="text-xl font-bold text-green-600">Rp {{ number_format($monthlyCost, 0, ',',
                                 '.') }}</span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">{{ number_format($monthlyProjection, 2) }} kWh × Rp {{
+                        <p class="text-xs text-gray-400 mt-1">{{ number_format($monthlyProjection, 2) }} kWh × Rp {{
                             number_format($lastPurchase->price_per_unit, 0, ',', '.') }}/kWh</p>
                     </div>
-                    <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="p-4 bg-gray-700 rounded-lg">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-gray-700 font-medium">Frekuensi Beli Token:</span>
+                            <span class="text-gray-300 font-medium">Frekuensi Beli Token:</span>
                             <span class="text-xl font-bold text-blue-600">{{ number_format($tokenFrequency, 1) }}x per
                                 bulan</span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">{{ number_format($monthlyProjection, 2) }} kWh ÷ {{
+                        <p class="text-xs text-gray-400 mt-1">{{ number_format($monthlyProjection, 2) }} kWh ÷ {{
                             number_format($averagePurchaseAmount, 2) }} kWh (rata-rata pembelian)</p>
                     </div>
                 </div>
             </div>
 
             <!-- Analisa Bulanan -->
-            <div class="bg-white rounded-xl shadow-lg p-8 border-t-4 border-green-500">
-                <h3 class="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+            <div class="bg-gray-800 rounded-xl shadow-lg p-8 border-t-4 border-green-500">
+                <h3 class="text-2xl font-bold text-white mb-2 flex items-center">
                     <svg class="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                     </svg>
                     Analisa Bulanan
                 </h3>
-                <p class="text-sm text-gray-500 mb-6">Prediksi berdasarkan data historis penggunaan</p>
+                <p class="text-sm text-gray-400 mb-6">Prediksi berdasarkan data historis penggunaan</p>
                 <div class="space-y-4">
-                    <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="p-4 bg-gray-700 rounded-lg">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-gray-700 font-medium">Estimasi Bulan Depan:</span>
-                            <span class="text-xl font-bold text-gray-900">{{ number_format($nextMonthEstimate, 2) }}
+                            <span class="text-gray-300 font-medium">Estimasi Bulan Depan:</span>
+                            <span class="text-xl font-bold text-white">{{ number_format($nextMonthEstimate, 2) }}
                                 kWh</span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Berdasarkan trend penggunaan historis</p>
+                        <p class="text-xs text-gray-400 mt-1">Berdasarkan trend penggunaan historis</p>
                     </div>
-                    <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="p-4 bg-gray-700 rounded-lg">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-gray-700 font-medium">Estimasi Biaya:</span>
+                            <span class="text-gray-300 font-medium">Estimasi Biaya:</span>
                             <span class="text-xl font-bold text-green-600">Rp {{ number_format($nextMonthEstimate *
                                 $lastPurchase->price_per_unit, 0, ',', '.') }}</span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">{{ number_format($nextMonthEstimate, 2) }} kWh × Rp {{ number_format($lastPurchase->price_per_unit, 0, ',', '.') }}/kWh</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ number_format($nextMonthEstimate, 2) }} kWh × Rp {{ number_format($lastPurchase->price_per_unit, 0, ',', '.') }}/kWh</p>
                     </div>
-                    <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="p-4 bg-gray-700 rounded-lg">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-gray-700 font-medium">Proyeksi Sisa Bulanan:</span>
+                            <span class="text-gray-300 font-medium">Proyeksi Sisa Bulanan:</span>
                             <span class="text-xl font-bold text-blue-600">{{ number_format(max(0, $averagePurchaseAmount
                                 - $monthlyProjection), 2) }} kWh</span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Jika beli {{ number_format($averagePurchaseAmount, 2) }} kWh dan pakai {{ number_format($monthlyProjection, 2) }} kWh</p>
+                        <p class="text-xs text-gray-400 mt-1">Jika beli {{ number_format($averagePurchaseAmount, 2) }} kWh dan pakai {{ number_format($monthlyProjection, 2) }} kWh</p>
                     </div>
                 </div>
             </div>
@@ -490,14 +492,14 @@
         @else
         <!-- No Data State -->
         <div class="text-center py-16">
-            <div class="bg-white rounded-xl shadow-lg p-12 max-w-md mx-auto">
+            <div class="bg-gray-800 rounded-xl shadow-lg p-12 max-w-md mx-auto border border-gray-700">
                 <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.34 15.5c-.77.833.192 2.5 1.732 2.5z">
                     </path>
                 </svg>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Belum Ada Data</h3>
-                <p class="text-gray-600 mb-6">Belum ada data pembelian atau pengecekan listrik. Silakan input data
+                <h3 class="text-xl font-bold text-white mb-2">Belum Ada Data</h3>
+                <p class="text-gray-400 mb-6">Belum ada data pembelian atau pengecekan listrik. Silakan input data
                     terlebih dahulu.</p>
                 <div class="space-x-4">
                     <a href="{{ route('purchase') }}"
