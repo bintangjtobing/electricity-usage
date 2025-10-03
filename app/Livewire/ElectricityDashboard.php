@@ -22,6 +22,7 @@ class ElectricityDashboard extends Component
     public $usageIndicator;
     public $usageIndicatorColor;
     public $projectionToPayday;
+    public $chartData;
     
     protected $listeners = ['refresh-dashboard' => 'refresh'];
     
@@ -64,6 +65,7 @@ class ElectricityDashboard extends Component
                 
                 $this->setUsageIndicator($this->dailyAverage);
                 $this->calculateProjectionToPayday();
+                $this->prepareChartData();
             } else {
                 // Set default values if no daily average
                 $this->projectionToPayday = [
@@ -175,7 +177,7 @@ class ElectricityDashboard extends Component
     {
         $now = Carbon::now();
         $currentDay = $now->day;
-        
+
         // Calculate target date (10th of next month if current date is after 10th)
         if ($currentDay <= 10) {
             $targetDate = Carbon::create($now->year, $now->month, 10);
@@ -184,22 +186,51 @@ class ElectricityDashboard extends Component
             $targetDate = Carbon::create($now->year, $now->month, 10)->addMonth();
             $targetMonth = $targetDate->format('F');
         }
-        
+
         // Calculate days until payday
         $daysUntilPayday = $now->diffInDays($targetDate);
-        
+
         // Calculate projected usage until payday
         $projectedUsage = $this->dailyAverage * $daysUntilPayday;
-        
+
         // Calculate remaining kWh on payday
         $remainingOnPayday = $this->remainingKwh - $projectedUsage;
-        
+
         $this->projectionToPayday = [
             'targetMonth' => $targetMonth,
             'daysUntilPayday' => $daysUntilPayday,
             'projectedUsage' => round($projectedUsage, 2),
             'remainingKwh' => round($remainingOnPayday, 2),
             'needToBuy' => $remainingOnPayday < 20 // If less than 20 kWh, likely need to buy before payday
+        ];
+    }
+
+    private function prepareChartData()
+    {
+        // Get all checks and purchases
+        $checks = ElectricityUsageCheck::orderBy('created_at', 'asc')->get();
+        $purchases = ElectricityPurchase::orderBy('created_at', 'asc')->get();
+
+        $labels = [];
+        $kwhData = [];
+        $purchaseData = [];
+
+        foreach ($checks as $check) {
+            $labels[] = Carbon::parse($check->created_at)->format('d M');
+            $kwhData[] = $check->kwh_remaining;
+
+            // Check if there's a purchase at this time
+            $purchase = $purchases->first(function($p) use ($check) {
+                return Carbon::parse($p->created_at)->diffInMinutes(Carbon::parse($check->created_at)) <= 60;
+            });
+
+            $purchaseData[] = $purchase ? $purchase->kwh_bought : null;
+        }
+
+        $this->chartData = [
+            'labels' => $labels,
+            'kwh' => $kwhData,
+            'purchases' => $purchaseData,
         ];
     }
 

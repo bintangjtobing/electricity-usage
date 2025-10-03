@@ -70,14 +70,146 @@
             </div>
         </div>
         
-        <!-- Status Indicator -->
+        <!-- Usage Chart -->
         <div class="mb-8">
-            <div class="rounded-xl shadow-2xl p-8 text-center transform transition-all duration-300 hover:scale-105 {{ $usageIndicatorColor }}">
-                <h2 class="text-2xl font-bold text-white mb-3">Status Penggunaan</h2>
-                <div class="text-6xl font-black text-white mb-3">{{ $usageIndicator }}</div>
-                <p class="text-xl text-white opacity-90">{{ number_format($dailyAverage, 2) }} kWh/hari</p>
+            <div class="bg-white rounded-xl shadow-2xl p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Grafik Penggunaan Listrik</h2>
+                        <p class="text-gray-600 mt-1">Tracking sisa kWh dan pembelian token</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="inline-block px-4 py-2 rounded-lg {{ $usageIndicatorColor }}">
+                            <span class="text-white font-bold">{{ $usageIndicator }}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">{{ number_format($dailyAverage, 2) }} kWh/hari</p>
+                    </div>
+                </div>
+                <div class="relative h-96">
+                    <canvas id="usageChart"></canvas>
+                </div>
             </div>
         </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const ctx = document.getElementById('usageChart');
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: @json($chartData['labels'] ?? []),
+                            datasets: [{
+                                label: 'Sisa kWh',
+                                data: @json($chartData['kwh'] ?? []),
+                                borderColor: 'rgb(59, 130, 246)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderWidth: 3,
+                                tension: 0.4,
+                                fill: true,
+                                pointRadius: 5,
+                                pointHoverRadius: 7,
+                                pointBackgroundColor: 'rgb(59, 130, 246)',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2
+                            }, {
+                                label: 'Pembelian Token (kWh)',
+                                data: @json($chartData['purchases'] ?? []),
+                                borderColor: 'rgb(34, 197, 94)',
+                                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                                borderWidth: 0,
+                                pointRadius: 8,
+                                pointHoverRadius: 10,
+                                pointBackgroundColor: 'rgb(34, 197, 94)',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 3,
+                                pointStyle: 'star',
+                                showLine: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: {
+                                            size: 12,
+                                            weight: 'bold'
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    padding: 12,
+                                    titleFont: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    },
+                                    bodyFont: {
+                                        size: 13
+                                    },
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.y !== null) {
+                                                label += context.parsed.y + ' kWh';
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value + ' kWh';
+                                        },
+                                        font: {
+                                            size: 11
+                                        }
+                                    },
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 11
+                                        },
+                                        maxRotation: 45,
+                                        minRotation: 45
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Re-render chart when Livewire refreshes
+            Livewire.on('refresh-dashboard', () => {
+                location.reload();
+            });
+        </script>
 
         <!-- Main Stats Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
