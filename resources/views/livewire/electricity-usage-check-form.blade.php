@@ -2,7 +2,7 @@
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-lg p-8">
             <div class="flex items-center justify-between mb-8">
-                <h2 class="text-3xl font-bold text-white">Electricity Usage Check</h2>
+                <h2 class="text-3xl font-bold text-white">Cek Sisa Listrik</h2>
                 <a href="{{ route('dashboard') }}" 
                    class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition duration-300">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,7 +27,7 @@
                 <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                 </svg>
-                * Indicates required question
+                * Wajib diisi
             </p>
 
             <form wire:submit="submit" class="space-y-6">
@@ -63,13 +63,14 @@
                 <!-- Input Field -->
                 <div>
                     <label for="kwh_remaining" class="block text-lg font-semibold text-white mb-3">
-                        KwH Vol Check <span class="text-red-500">*</span>
+                        Sisa kWh di Meteran <span class="text-red-500">*</span>
                     </label>
                     <div class="relative">
                         <input type="number" 
                                id="kwh_remaining"
                                wire:model="kwh_remaining" 
                                step="0.01"
+                               inputmode="decimal"
                                class="block w-full px-4 py-4 text-lg border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 @error('kwh_remaining') border-red-500 @enderror"
                                placeholder="Contoh: 62.40">
                         <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -109,12 +110,19 @@
 
                 <!-- Submit Button -->
                 <div class="flex justify-end pt-4">
-                    <button type="submit" 
-                            class="inline-flex items-center px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button type="submit"
+                            wire:loading.attr="disabled"
+                            wire:target="submit"
+                            class="inline-flex items-center justify-center w-full sm:w-auto px-8 py-4 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-md transition focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <svg wire:loading.remove wire:target="submit" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
-                        Simpan Pengecekan
+                        <svg wire:loading wire:target="submit" class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span wire:loading.remove wire:target="submit">Simpan Pengecekan</span>
+                        <span wire:loading wire:target="submit">Menyimpan&hellip;</span>
                     </button>
                 </div>
             </form>

@@ -123,11 +123,18 @@
 
                 <div class="flex justify-end pt-4 border-t border-gray-700">
                     <button type="submit"
-                            class="inline-flex items-center px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            wire:loading.attr="disabled"
+                            wire:target="save"
+                            class="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-md transition">
+                        <svg wire:loading.remove wire:target="save" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
-                        Simpan Pengaturan
+                        <svg wire:loading wire:target="save" class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span wire:loading.remove wire:target="save">Simpan Pengaturan</span>
+                        <span wire:loading wire:target="save">Menyimpan&hellip;</span>
                     </button>
                 </div>
             </form>

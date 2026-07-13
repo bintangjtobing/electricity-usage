@@ -2,12 +2,19 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{ config('app.name', 'Laravel') }}</title>
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
+
+    <!-- PWA: bisa dipasang ke home screen dan dibuka tanpa address bar -->
+    <meta name="theme-color" content="#111827">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Listrik">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icons/icon-192.png') }}">
+    <link rel="icon" href="{{ asset('icons/icon-192.png') }}">
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
 <body class="bg-gray-900 font-sans antialiased">

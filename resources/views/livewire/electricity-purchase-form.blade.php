@@ -69,7 +69,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="purchase_price_formatted" class="block text-sm font-medium text-gray-300 mb-2">
-                            Purchase Price <span class="text-red-500">*</span>
+                            Nominal Pembelian <span class="text-red-500">*</span>
                         </label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -78,6 +78,7 @@
                             <input type="text" 
                                    id="purchase_price_formatted"
                                    wire:model.live="purchase_price_formatted" 
+                                   inputmode="numeric"
                                    class="block w-full pl-12 pr-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('purchase_price') border-red-500 @enderror"
                                    placeholder="250.000">
                         </div>
@@ -97,13 +98,14 @@
 
                     <div>
                         <label for="kwh_bought" class="block text-sm font-medium text-gray-300 mb-2">
-                            KwH Vol.
+                            kWh Didapat
                         </label>
                         <div class="relative">
-                            <input type="number" 
+                            <input type="number"
                                    id="kwh_bought"
-                                   wire:model.live="kwh_bought" 
+                                   wire:model.live="kwh_bought"
                                    step="0.01"
+                                   inputmode="decimal"
                                    class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('kwh_bought') border-red-500 @enderror"
                                    placeholder="157.32">
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -129,6 +131,7 @@
                                wire:model="kwh_before_purchase"
                                step="0.01"
                                min="0"
+                               inputmode="decimal"
                                class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('kwh_before_purchase') border-red-500 @enderror"
                                placeholder="mis. 12.40">
                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -176,12 +179,22 @@
 
                 <!-- Submit Button -->
                 <div class="flex justify-end">
-                    <button type="submit" 
-                            class="inline-flex items-center px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {{-- wire:loading menonaktifkan tombol selama proses simpan. Tanpa ini
+                         tombol diam saja saat ditekan, dan di jaringan lambat orang
+                         menekannya lagi -- pembelian bisa tercatat dua kali. --}}
+                    <button type="submit"
+                            wire:loading.attr="disabled"
+                            wire:target="submit"
+                            class="inline-flex items-center justify-center w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-md transition focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg wire:loading.remove wire:target="submit" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
-                        Simpan Pembelian
+                        <svg wire:loading wire:target="submit" class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span wire:loading.remove wire:target="submit">Simpan Pembelian</span>
+                        <span wire:loading wire:target="submit">Menyimpan&hellip;</span>
                     </button>
                 </div>
             </form>

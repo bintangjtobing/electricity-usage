@@ -121,7 +121,7 @@
             </div>
         </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        {{-- Chart.js kini ikut dibundel lewat Vite (resources/js/app.js), tidak lagi dari CDN. --}}
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const ctx = document.getElementById('usageChart');

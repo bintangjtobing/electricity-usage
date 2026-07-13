@@ -19,35 +19,36 @@ class KwhConfirmationModal extends Component
     public $hoursSinceLastCheck = 0;
     public $dailyAverage = 0;
     
+    /** Catatan dianggap basi setelah sekian hari tanpa pembacaan meteran. */
+    private const STALE_AFTER_DAYS = 3;
+
     public function mount()
     {
-        // Check if user clicked "Ask later" in this session
         if (session('kwh_confirmation_ask_later')) {
             return;
         }
 
-        // Get last usage check
         $lastCheck = ElectricityUsageCheck::latest()->first();
 
-        if ($lastCheck) {
-            $this->lastKwhValue = $lastCheck->kwh_remaining;
-            $this->meterNumber = $lastCheck->meter_number;
-
-            // Calculate hours since last check
-            $lastCheckTime = Carbon::parse($lastCheck->created_at);
-            $this->hoursSinceLastCheck = $lastCheckTime->diffInHours(Carbon::now());
-
-            // Calculate daily average usage
-            $this->dailyAverage = $this->calculateDailyAverage();
-
-            // Calculate predicted remaining kWh
-            $daysSinceLastCheck = $this->hoursSinceLastCheck / 24;
-            $estimatedUsage = $this->dailyAverage * $daysSinceLastCheck;
-            $this->predictedKwhValue = max(0, round($this->lastKwhValue - $estimatedUsage, 2));
-
-            // Always show modal when user visits (unless they clicked "Ask later")
-            $this->showModal = true;
+        if (! $lastCheck) {
+            return;
         }
+
+        $this->lastKwhValue = $lastCheck->kwh_remaining;
+        $this->meterNumber = $lastCheck->meter_number;
+        $this->hoursSinceLastCheck = Carbon::parse($lastCheck->created_at)->diffInHours(now());
+        $this->dailyAverage = $this->calculateDailyAverage();
+
+        $daysSinceLastCheck = $this->hoursSinceLastCheck / 24;
+        $estimatedUsage = $this->dailyAverage * $daysSinceLastCheck;
+        $this->predictedKwhValue = max(0, round($this->lastKwhValue - $estimatedUsage, 2));
+
+        // Dulu modal ini muncul di setiap kunjungan, bahkan ketika meteran baru
+        // saja dicek -- tidak ada gunanya bertanya dan justru mengganggu.
+        // Sekarang hanya muncul kalau angkanya memang perlu dikonfirmasi:
+        // catatannya sudah basi, atau angka terakhir cuma hasil tebakan.
+        $this->showModal = $daysSinceLastCheck >= self::STALE_AFTER_DAYS
+            || (bool) $lastCheck->is_estimated;
     }
     
     public function confirmYes()
