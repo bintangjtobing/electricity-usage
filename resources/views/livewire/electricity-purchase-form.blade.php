@@ -55,6 +55,7 @@
                     <input type="date"
                            id="purchase_date"
                            wire:model="purchase_date"
+                           value="{{ $purchase_date }}"
                            max="{{ now()->format('Y-m-d') }}"
                            style="color-scheme: dark;"
                            class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('purchase_date') border-red-500 @enderror">

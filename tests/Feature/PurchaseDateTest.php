@@ -19,6 +19,14 @@ class PurchaseDateTest extends TestCase
             ->assertSet('purchase_date', now()->format('Y-m-d'));
     }
 
+    public function test_date_input_is_prefilled_with_today(): void
+    {
+        // Livewire tidak mengisi value input saat render awal, jadi tanpa
+        // atribut value= kotak tanggalnya tampil kosong walau propertinya terisi.
+        Livewire::test(ElectricityPurchaseForm::class)
+            ->assertSeeHtml('value="' . now()->format('Y-m-d') . '"');
+    }
+
     public function test_purchase_saved_with_today_when_date_untouched(): void
     {
         Livewire::test(ElectricityPurchaseForm::class)
