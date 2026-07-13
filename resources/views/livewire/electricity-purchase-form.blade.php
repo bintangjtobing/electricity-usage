@@ -47,6 +47,23 @@
                     </div>
                 </div>
 
+                <!-- Tanggal Pembelian -->
+                <div class="md:w-1/2 md:pr-3">
+                    <label for="purchase_date" class="block text-sm font-medium text-gray-300 mb-2">
+                        Tanggal Pembelian <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date"
+                           id="purchase_date"
+                           wire:model="purchase_date"
+                           max="{{ now()->format('Y-m-d') }}"
+                           style="color-scheme: dark;"
+                           class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('purchase_date') border-red-500 @enderror">
+                    @error('purchase_date')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-1 text-xs text-gray-400">Default hari ini. Ubah jika mencatat pembelian yang terlewat</p>
+                </div>
+
                 <!-- Input Fields -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>

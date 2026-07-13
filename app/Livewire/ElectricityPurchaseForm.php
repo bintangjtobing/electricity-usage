@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\ElectricityPurchase;
 use App\Models\ElectricityUsageCheck;
+use Carbon\Carbon;
 use Livewire\Component;
 
 class ElectricityPurchaseForm extends Component
@@ -11,6 +12,7 @@ class ElectricityPurchaseForm extends Component
     public $purchase_price;
     public $purchase_price_formatted = '';
     public $kwh_bought;
+    public $purchase_date;
     public $meter_number = '50220822832';
     public $owner_name = 'Perdana Residence 002';
     public $tariff_type = 'R1T 2200 VA';
@@ -18,12 +20,18 @@ class ElectricityPurchaseForm extends Component
 
     protected $rules = [
         'purchase_price' => 'required|numeric|min:50000',
-        'kwh_bought' => 'required|numeric|min:1'
+        'kwh_bought' => 'required|numeric|min:1',
+        'purchase_date' => 'required|date|before_or_equal:today'
+    ];
+
+    protected $messages = [
+        'purchase_date.before_or_equal' => 'Tanggal pembelian tidak boleh di masa depan.'
     ];
 
     public function mount()
     {
         $this->price_per_unit = 1589.07;
+        $this->purchase_date = now()->format('Y-m-d');
     }
 
     public function updatedPurchasePriceFormatted($value)
@@ -53,8 +61,13 @@ class ElectricityPurchaseForm extends Component
     {
         $this->validate();
 
+        // Tanggal pembelian jadi created_at, karena seluruh dashboard & grafik
+        // memakai created_at sebagai tanggal transaksi. Jam diambil dari waktu
+        // sekarang supaya urutan antar entri di hari yang sama tetap benar.
+        $purchasedAt = Carbon::parse($this->purchase_date)->setTimeFrom(now());
+
         // Create purchase record
-        ElectricityPurchase::create([
+        $purchase = new ElectricityPurchase([
             'meter_number' => $this->meter_number,
             'owner_name' => $this->owner_name,
             'tariff_type' => $this->tariff_type,
@@ -62,9 +75,14 @@ class ElectricityPurchaseForm extends Component
             'kwh_bought' => $this->kwh_bought,
             'price_per_unit' => $this->price_per_unit
         ]);
+        $purchase->created_at = $purchasedAt;
+        $purchase->updated_at = $purchasedAt;
+        $purchase->save();
 
-        // Get last usage check
+        // Get last usage check as of the purchase date (bukan yang paling baru),
+        // supaya pembelian yang dicatat mundur tetap dihitung dari saldo saat itu
         $lastCheck = ElectricityUsageCheck::where('meter_number', $this->meter_number)
+            ->where('created_at', '<=', $purchasedAt)
             ->latest()
             ->first();
 
@@ -73,13 +91,17 @@ class ElectricityPurchaseForm extends Component
         $newKwhRemaining = $lastKwhRemaining + $this->kwh_bought;
 
         // Auto-create new usage check with updated remaining
-        ElectricityUsageCheck::create([
+        $check = new ElectricityUsageCheck([
             'meter_number' => $this->meter_number,
             'kwh_remaining' => $newKwhRemaining,
         ]);
+        $check->created_at = $purchasedAt;
+        $check->updated_at = $purchasedAt;
+        $check->save();
 
         session()->flash('message', 'Pembelian listrik berhasil dicatat!');
         $this->reset(['purchase_price', 'purchase_price_formatted', 'kwh_bought']);
+        $this->purchase_date = now()->format('Y-m-d');
 
         // Refresh dashboard
         $this->dispatch('refresh-dashboard');
