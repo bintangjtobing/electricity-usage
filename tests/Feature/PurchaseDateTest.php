@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\ElectricityPurchaseForm;
 use App\Models\ElectricityPurchase;
 use App\Models\ElectricityUsageCheck;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -12,6 +13,12 @@ use Tests\TestCase;
 class PurchaseDateTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->actingAs(User::factory()->create());
+    }
 
     public function test_default_purchase_date_is_today(): void
     {
@@ -50,10 +57,8 @@ class PurchaseDateTest extends TestCase
         $check = ElectricityUsageCheck::first();
 
         $this->assertSame('2026-06-10', $purchase->created_at->format('Y-m-d'));
-        // Pembelian dan usage-check otomatis harus punya timestamp sama,
-        // karena dashboard mencocokkan keduanya dalam rentang 60 menit.
         $this->assertSame('2026-06-10', $check->created_at->format('Y-m-d'));
-        $this->assertSame(629.30, round((float) $purchase->kwh_bought, 2));
+        $this->assertSame(629.30, round($purchase->kwh_bought, 2));
     }
 
     public function test_future_date_is_rejected(): void
@@ -67,33 +72,57 @@ class PurchaseDateTest extends TestCase
         $this->assertSame(0, ElectricityPurchase::count());
     }
 
-    public function test_backdated_purchase_uses_balance_as_of_that_date(): void
+    public function test_reading_before_topup_gives_exact_balance_and_is_not_estimated(): void
     {
-        // Saldo 50 kWh pada 1 Juni, lalu 10 kWh pada 1 Juli.
+        // Cek terakhir 50 kWh, tapi saat top-up meteran tinggal 12 kWh --
+        // 38 kWh terpakai di antaranya. Saldo sesudahnya harus 12 + 100, bukan 50 + 100.
         ElectricityUsageCheck::forceCreate([
             'meter_number' => '50220822832',
             'kwh_remaining' => 50,
-            'created_at' => '2026-06-01 08:00:00',
-            'updated_at' => '2026-06-01 08:00:00',
-        ]);
-        ElectricityUsageCheck::forceCreate([
-            'meter_number' => '50220822832',
-            'kwh_remaining' => 10,
-            'created_at' => '2026-07-01 08:00:00',
-            'updated_at' => '2026-07-01 08:00:00',
+            'is_estimated' => false,
+            'created_at' => now()->subDays(14),
+            'updated_at' => now()->subDays(14),
         ]);
 
-        // Pembelian dicatat mundur ke 10 Juni -> harus dihitung dari saldo 50,
-        // bukan dari saldo terbaru (10).
         Livewire::test(ElectricityPurchaseForm::class)
             ->set('kwh_bought', 100)
-            ->set('purchase_date', '2026-06-10')
+            ->set('kwh_before_purchase', 12)
             ->call('submit')
             ->assertHasNoErrors();
 
-        $newCheck = ElectricityUsageCheck::whereDate('created_at', '2026-06-10')->first();
+        $check = ElectricityUsageCheck::latest('id')->first();
 
-        $this->assertNotNull($newCheck);
-        $this->assertSame(150.0, (float) $newCheck->kwh_remaining);
+        $this->assertSame(112.0, round($check->kwh_remaining, 2));
+        $this->assertFalse($check->is_estimated);
+    }
+
+    public function test_balance_is_flagged_estimated_when_reading_is_omitted(): void
+    {
+        ElectricityUsageCheck::forceCreate([
+            'meter_number' => '50220822832',
+            'kwh_remaining' => 50,
+            'is_estimated' => false,
+            'created_at' => now()->subDays(14),
+            'updated_at' => now()->subDays(14),
+        ]);
+
+        Livewire::test(ElectricityPurchaseForm::class)
+            ->set('kwh_bought', 100)
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $check = ElectricityUsageCheck::latest('id')->first();
+
+        // Terpaksa memakai catatan terakhir; pemakaian di antaranya tak diketahui.
+        $this->assertSame(150.0, round($check->kwh_remaining, 2));
+        $this->assertTrue($check->is_estimated);
+    }
+
+    public function test_quick_amount_button_fills_price_and_kwh(): void
+    {
+        Livewire::test(ElectricityPurchaseForm::class)
+            ->call('setAmount', 250000)
+            ->assertSet('purchase_price', 250000.0)
+            ->assertSet('kwh_bought', 157.32);
     }
 }

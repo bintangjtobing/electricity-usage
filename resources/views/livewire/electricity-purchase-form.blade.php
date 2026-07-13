@@ -30,7 +30,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-1">Alamat</label>
-                            <p class="text-sm text-gray-400">Perdana Residence 2 No. C001, Jl. Danau Batur, Sumber Mulyorejo, Kec. Binjai Tim., Kota Binjai, Sumatera Utara 20734</p>
+                            <p class="text-sm text-gray-400">{{ $address }}</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-1">No Meter</label>
@@ -81,10 +81,18 @@
                                    class="block w-full pl-12 pr-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('purchase_price') border-red-500 @enderror"
                                    placeholder="250.000">
                         </div>
-                        @error('purchase_price') 
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p> 
+                        @error('purchase_price')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
-                        <p class="mt-1 text-xs text-gray-400">Format otomatis dengan titik sebagai pemisah ribuan</p>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            @foreach ($quickAmounts as $amount)
+                                <button type="button"
+                                        wire:click="setAmount({{ $amount }})"
+                                        class="px-3 py-1 text-xs font-medium rounded-full bg-gray-600 text-gray-200 hover:bg-blue-600 hover:text-white transition-colors">
+                                    {{ number_format($amount / 1000, 0, ',', '.') }}rb
+                                </button>
+                            @endforeach
+                        </div>
                     </div>
 
                     <div>
@@ -102,11 +110,39 @@
                                 <span class="text-gray-400 sm:text-sm">kWh</span>
                             </div>
                         </div>
-                        @error('kwh_bought') 
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p> 
+                        @error('kwh_bought')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                         <p class="mt-1 text-xs text-gray-400">Akan otomatis terisi saat input harga</p>
                     </div>
+                </div>
+
+                <!-- Sisa kWh sebelum top-up -->
+                <div class="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
+                    <label for="kwh_before_purchase" class="block text-sm font-medium text-gray-300 mb-2">
+                        Sisa kWh di meteran sebelum top-up
+                        <span class="text-gray-500 font-normal">(opsional)</span>
+                    </label>
+                    <div class="relative md:w-1/2">
+                        <input type="number"
+                               id="kwh_before_purchase"
+                               wire:model="kwh_before_purchase"
+                               step="0.01"
+                               min="0"
+                               class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('kwh_before_purchase') border-red-500 @enderror"
+                               placeholder="mis. 12.40">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <span class="text-gray-400 sm:text-sm">kWh</span>
+                        </div>
+                    </div>
+                    @error('kwh_before_purchase')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-2 text-xs text-gray-400">
+                        Isi dengan angka yang tertera di meteran <span class="text-gray-300">tepat sebelum</span> token dimasukkan.
+                        Kalau dikosongkan, sisa dihitung dari catatan terakhir &mdash; pemakaian sejak catatan itu tidak
+                        diketahui, jadi hasilnya ditandai sebagai <span class="text-yellow-400">estimasi</span>.
+                    </p>
                 </div>
 
                 <!-- Price per Unit Display -->

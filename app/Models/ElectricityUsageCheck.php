@@ -11,6 +11,17 @@ class ElectricityUsageCheck extends Model
 
     protected $fillable = [
         'meter_number',
-        'kwh_remaining'
+        'kwh_remaining',
+        'is_estimated'
     ];
+
+    protected $casts = [
+        'kwh_remaining' => 'float',
+        'is_estimated' => 'boolean',
+    ];
+
+    public function scopeMeasured($query)
+    {
+        return $query->where('is_estimated', false);
+    }
 }

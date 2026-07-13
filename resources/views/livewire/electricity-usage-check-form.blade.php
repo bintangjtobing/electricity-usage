@@ -42,6 +42,24 @@
                     <p class="text-sm text-blue-300">Masukkan sisa kWh yang tertera pada meter listrik Anda untuk memantau penggunaan dan membuat proyeksi yang akurat.</p>
                 </div>
 
+                <!-- Tanggal Pengecekan -->
+                <div class="md:w-1/2">
+                    <label for="check_date" class="block text-sm font-medium text-gray-300 mb-2">
+                        Tanggal Pengecekan <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date"
+                           id="check_date"
+                           wire:model="check_date"
+                           value="{{ $check_date }}"
+                           max="{{ now()->format('Y-m-d') }}"
+                           style="color-scheme: dark;"
+                           class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 @error('check_date') border-red-500 @enderror">
+                    @error('check_date')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-1 text-xs text-gray-400">Default hari ini</p>
+                </div>
+
                 <!-- Input Field -->
                 <div>
                     <label for="kwh_remaining" class="block text-lg font-semibold text-white mb-3">

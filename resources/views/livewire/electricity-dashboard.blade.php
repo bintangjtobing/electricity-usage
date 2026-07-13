@@ -1,5 +1,16 @@
 <div class="min-h-screen bg-gray-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        @if ($lastCheckIsEstimated)
+            <div class="mb-6 bg-yellow-900/40 border-l-4 border-yellow-500 p-4 rounded-lg">
+                <p class="text-sm text-yellow-300">
+                    <span class="font-semibold">Sisa kWh di bawah ini masih estimasi.</span>
+                    Angkanya dihitung dari perkiraan, bukan dibaca dari meteran.
+                    <a href="{{ route('check') }}" class="underline hover:text-yellow-200">Catat sisa sebenarnya</a>
+                    agar proyeksinya akurat.
+                </p>
+            </div>
+        @endif
+
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
             <div>

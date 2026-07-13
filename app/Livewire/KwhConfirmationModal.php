@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\ElectricityUsageCheck;
 use App\Models\ElectricityPurchase;
+use App\Support\UsageCalculator;
 use Livewire\Component;
 use Carbon\Carbon;
 
@@ -51,10 +52,12 @@ class KwhConfirmationModal extends Component
     
     public function confirmYes()
     {
-        // Save new usage check with predicted value
+        // Nilai ini hasil prediksi, bukan angka yang dibaca dari meteran.
+        // Ditandai supaya bisa dibedakan dari pembacaan sungguhan di riwayat.
         ElectricityUsageCheck::create([
             'meter_number' => $this->meterNumber,
             'kwh_remaining' => $this->predictedKwhValue,
+            'is_estimated' => true,
         ]);
 
         $this->showModal = false;
@@ -76,12 +79,13 @@ class KwhConfirmationModal extends Component
             'newKwhValue' => 'required|numeric|min:0|max:9999.99',
         ]);
         
-        // Save new usage check with new value
+        // Angka ini dibaca langsung dari meteran oleh user, jadi bukan estimasi.
         ElectricityUsageCheck::create([
             'meter_number' => $this->meterNumber,
             'kwh_remaining' => $this->newKwhValue,
+            'is_estimated' => false,
         ]);
-        
+
         $this->showModal = false;
         $this->showInputField = false;
         $this->dispatch('usage-check-saved');
@@ -106,52 +110,7 @@ class KwhConfirmationModal extends Component
 
     private function calculateDailyAverage()
     {
-        // Get usage checks ordered by date
-        $checks = ElectricityUsageCheck::orderBy('created_at', 'asc')->get();
-
-        if ($checks->count() < 2) {
-            return 0;
-        }
-
-        $totalUsage = 0;
-        $totalDays = 0;
-
-        // Calculate usage between consecutive checks
-        for ($i = 1; $i < $checks->count(); $i++) {
-            $prevCheck = $checks[$i - 1];
-            $currCheck = $checks[$i];
-
-            $prevKwh = $prevCheck->kwh_remaining;
-            $currKwh = $currCheck->kwh_remaining;
-
-            // If current kWh is higher than previous, a purchase was made
-            if ($currKwh > $prevKwh) {
-                // Find purchase between these checks
-                $purchase = ElectricityPurchase::where('created_at', '>', $prevCheck->created_at)
-                    ->where('created_at', '<=', $currCheck->created_at)
-                    ->first();
-
-                if ($purchase) {
-                    // Usage = previous remaining - minimum before purchase
-                    $usageBeforePurchase = $prevKwh - ($currKwh - $purchase->kwh_bought);
-                    $totalUsage += max(0, $usageBeforePurchase);
-                }
-            } else {
-                // Normal usage (no purchase)
-                $usage = $prevKwh - $currKwh;
-                $totalUsage += max(0, $usage);
-            }
-
-            $days = Carbon::parse($prevCheck->created_at)->diffInDays(Carbon::parse($currCheck->created_at));
-            $totalDays += max(1, $days); // At least 1 day to avoid division by zero
-        }
-
-        // Calculate daily average
-        if ($totalDays > 0) {
-            return round($totalUsage / $totalDays, 2);
-        }
-
-        return 0;
+        return UsageCalculator::dailyAverage();
     }
 
     public function render()

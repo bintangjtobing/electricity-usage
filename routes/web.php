@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -7,28 +8,27 @@ use Illuminate\Support\Facades\Route;
 | Web Routes
 |--------------------------------------------------------------------------
 |
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
+| Seluruh halaman data berada di balik middleware "auth". Sebelumnya semua
+| route terbuka untuk publik -- siapa pun yang tahu URL-nya bisa melihat pola
+| konsumsi listrik rumah ini dan menambah data sembarangan.
 |
 */
 
-Route::get('/', function () {
-    return redirect()->route('dashboard');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->name('dashboard');
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
 
-Route::get('/purchase', function () {
-    return view('purchase');
-})->name('purchase');
+Route::middleware('auth')->group(function () {
+    Route::get('/', fn () => redirect()->route('dashboard'));
 
-Route::get('/check', function () {
-    return view('check');
-})->name('check');
-
-Route::get('/history', function () {
-    return view('history');
-})->name('history');
+    Route::view('/dashboard', 'dashboard')->name('dashboard');
+    Route::view('/purchase', 'purchase')->name('purchase');
+    Route::view('/check', 'check')->name('check');
+    Route::view('/history', 'history')->name('history');
+    Route::view('/settings', 'settings')->name('settings');
+});

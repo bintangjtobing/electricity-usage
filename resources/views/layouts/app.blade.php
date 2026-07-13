@@ -31,11 +31,25 @@
                            class="{{ request()->routeIs('check') ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:border-gray-600 hover:text-gray-300' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200">
                             Cek Sisa
                         </a>
-                        <a href="{{ route('history') }}" 
+                        <a href="{{ route('history') }}"
                            class="{{ request()->routeIs('history') ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:border-gray-600 hover:text-gray-300' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200">
                             Riwayat
                         </a>
+                        <a href="{{ route('settings') }}"
+                           class="{{ request()->routeIs('settings') ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-gray-400 hover:border-gray-600 hover:text-gray-300' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200">
+                            Pengaturan
+                        </a>
                     </div>
+                </div>
+                <div class="hidden sm:flex sm:items-center">
+                    <span class="text-sm text-gray-400 mr-4">{{ auth()->user()?->name }}</span>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit"
+                                class="text-sm text-gray-400 hover:text-white transition-colors duration-200">
+                            Keluar
+                        </button>
+                    </form>
                 </div>
                 <div class="sm:hidden flex items-center">
                     <button onclick="toggleMobileMenu()" 
@@ -66,6 +80,17 @@
                    class="text-gray-400 hover:bg-gray-700 hover:border-gray-600 hover:text-gray-300 block pl-3 pr-4 py-2 border-l-4 text-base font-medium {{ request()->routeIs('history') ? 'bg-gray-700 border-indigo-500 text-indigo-400' : 'border-transparent' }}">
                     Riwayat
                 </a>
+                <a href="{{ route('settings') }}"
+                   class="text-gray-400 hover:bg-gray-700 hover:border-gray-600 hover:text-gray-300 block pl-3 pr-4 py-2 border-l-4 text-base font-medium {{ request()->routeIs('settings') ? 'bg-gray-700 border-indigo-500 text-indigo-400' : 'border-transparent' }}">
+                    Pengaturan
+                </a>
+                <form method="POST" action="{{ route('logout') }}" class="border-t border-gray-700 mt-2 pt-2">
+                    @csrf
+                    <button type="submit"
+                            class="w-full text-left text-gray-400 hover:bg-gray-700 hover:text-gray-300 block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium">
+                        Keluar
+                    </button>
+                </form>
             </div>
         </div>
     </nav>
