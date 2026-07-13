@@ -30,7 +30,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-1">Alamat</label>
-                            <p class="text-sm text-gray-400">Jl. Gunung Lumut No.62, Padangsambian Klod, Kec. Denpasar Bar., Kota 80117</p>
+                            <p class="text-sm text-gray-400">Perdana Residence 2 No. C001, Jl. Danau Batur, Sumber Mulyorejo, Kec. Binjai Tim., Kota Binjai, Sumatera Utara 20734</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-1">No Meter</label>
@@ -79,7 +79,7 @@
                                    wire:model.live="kwh_bought" 
                                    step="0.01"
                                    class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('kwh_bought') border-red-500 @enderror"
-                                   placeholder="157.40">
+                                   placeholder="157.32">
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                 <span class="text-gray-400 sm:text-sm">kWh</span>
                             </div>

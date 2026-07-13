@@ -11,9 +11,9 @@ class ElectricityPurchaseForm extends Component
     public $purchase_price;
     public $purchase_price_formatted = '';
     public $kwh_bought;
-    public $meter_number = '86281730696';
-    public $owner_name = 'I MADE WIRAHADI KESUMA 9';
-    public $tariff_type = 'R1 / 1300 VA';
+    public $meter_number = '50220822832';
+    public $owner_name = 'Perdana Residence 002';
+    public $tariff_type = 'R1T 2200 VA';
     public $price_per_unit;
 
     protected $rules = [
@@ -23,7 +23,7 @@ class ElectricityPurchaseForm extends Component
 
     public function mount()
     {
-        $this->price_per_unit = 1588.31;
+        $this->price_per_unit = 1589.07;
     }
 
     public function updatedPurchasePriceFormatted($value)

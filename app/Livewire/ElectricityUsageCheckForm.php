@@ -8,7 +8,7 @@ use Livewire\Component;
 class ElectricityUsageCheckForm extends Component
 {
     public $kwh_remaining;
-    public $meter_number = '86281730696';
+    public $meter_number = '50220822832';
 
     protected $rules = [
         'kwh_remaining' => 'required|numeric|min:0'
