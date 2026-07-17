@@ -64,8 +64,8 @@
                     <div class="flex-1">
                         <h3 class="text-lg font-semibold text-white mb-2">Hai Bintang! 👋</h3>
                         <p class="text-gray-300 leading-relaxed">
-                            Saya adalah assistant pribadi untuk mengecek semua penggunaan listrik token di Kos Bali kamu
-                            saat ini.
+                            Saya adalah assistant pribadi untuk mengecek semua penggunaan listrik token di
+                            <span class="font-semibold">{{ $locationLabel }}</span> saat ini.
                             Saya melihat bahwa kamu membeli token terakhir kali tanggal <span class="font-semibold">{{
                                 $lastPurchase->created_at->format('d/m/Y') }}</span>,
                             dengan sisa listrik (kWh) sebesar <span class="font-semibold">{{

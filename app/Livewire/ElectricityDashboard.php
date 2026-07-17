@@ -31,6 +31,7 @@ class ElectricityDashboard extends Component
     public $estimatedEmptyDate;
     public $thresholdHemat = 0;
     public $thresholdBoros = 0;
+    public $locationLabel = 'properti kamu';
     public $lastCheckIsEstimated = false;
 
     protected $listeners = ['refresh-dashboard' => 'refresh'];
@@ -51,6 +52,12 @@ class ElectricityDashboard extends Component
 
         $this->thresholdHemat = (float) $setting->threshold_hemat;
         $this->thresholdBoros = (float) $setting->threshold_boros;
+
+        // Lokasi diambil dari Pengaturan (owner_name). Kalau masih placeholder
+        // default ('-') pakai frasa generik supaya tidak tampil "di - kamu".
+        $this->locationLabel = ($setting->owner_name && $setting->owner_name !== '-')
+            ? $setting->owner_name
+            : 'properti kamu';
 
         $this->lastPurchase = ElectricityPurchase::latest()->first();
         $this->lastCheck = ElectricityUsageCheck::latest()->first();
