@@ -96,6 +96,44 @@ class PurchaseDateTest extends TestCase
         $this->assertFalse($check->is_estimated);
     }
 
+    public function test_reading_before_topup_stores_two_points_pre_and_post(): void
+    {
+        // Sisa sebelum beli diisi => grafik perlu dua titik: turun dulu ke 12
+        // (pemakaian nyata sejak cek terakhir), lalu naik ke 112 setelah top-up.
+        ElectricityUsageCheck::forceCreate([
+            'meter_number' => '50220822832',
+            'kwh_remaining' => 50,
+            'is_estimated' => false,
+            'created_at' => now()->subDays(14),
+            'updated_at' => now()->subDays(14),
+        ]);
+
+        Livewire::test(ElectricityPurchaseForm::class)
+            ->set('kwh_bought', 100)
+            ->set('kwh_before_purchase', 12)
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        // Seed + pre + post = 3 titik.
+        $this->assertSame(3, ElectricityUsageCheck::count());
+
+        $checks = ElectricityUsageCheck::orderBy('created_at')->get();
+        $pre = $checks[1];
+        $post = $checks[2];
+
+        $this->assertSame(12.0, round($pre->kwh_remaining, 2));
+        $this->assertFalse((bool) $pre->is_estimated);
+        $this->assertSame(112.0, round($post->kwh_remaining, 2));
+        $this->assertFalse((bool) $post->is_estimated);
+
+        // Urutan waktu harus pre < post supaya kalkulator menaruh pembelian di
+        // selang yang benar (pemakaian 38 kWh di selang sebelum top-up).
+        $this->assertTrue($pre->created_at->lt($post->created_at));
+
+        $stats = \App\Support\UsageCalculator::stats();
+        $this->assertSame(38.0, round($stats['totalUsage'], 2));
+    }
+
     public function test_balance_is_flagged_estimated_when_reading_is_omitted(): void
     {
         ElectricityUsageCheck::forceCreate([

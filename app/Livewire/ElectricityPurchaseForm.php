@@ -109,30 +109,45 @@ class ElectricityPurchaseForm extends Component
         $isEstimated = $this->kwh_before_purchase === null || $this->kwh_before_purchase === '';
 
         if ($isEstimated) {
+            // Sisa sebelum top-up tak diketahui: cukup satu titik (sesudah top-up),
+            // ditandai estimasi karena pemakaian sebelumnya cuma tebakan.
             $lastCheck = ElectricityUsageCheck::where('meter_number', $this->meter_number)
                 ->where('created_at', '<=', $purchasedAt)
                 ->latest()
                 ->first();
 
             $baseKwh = $lastCheck ? $lastCheck->kwh_remaining : 0;
-        } else {
-            $baseKwh = (float) $this->kwh_before_purchase;
-        }
 
-        $check = new ElectricityUsageCheck([
-            'meter_number' => $this->meter_number,
-            'kwh_remaining' => round($baseKwh + $this->kwh_bought, 2),
-            'is_estimated' => $isEstimated,
-        ]);
-        $check->created_at = $purchasedAt;
-        $check->updated_at = $purchasedAt;
-        $check->save();
+            $this->recordCheck($baseKwh + $this->kwh_bought, true, $purchasedAt);
+        } else {
+            // Sisa sebelum top-up diketahui: simpan DUA titik supaya grafik
+            // menampilkan penurunan nyata sebelum beli, lalu lonjakan sesudah
+            // top-up. Detik digeser agar urutan pre-check < pembelian < post-check
+            // terjaga untuk UsageCalculator (pembelian masuk ke selang yang benar).
+            $baseKwh = (float) $this->kwh_before_purchase;
+
+            $this->recordCheck($baseKwh, false, $purchasedAt->copy()->subSecond());
+            $this->recordCheck($baseKwh + $this->kwh_bought, false, $purchasedAt->copy()->addSecond());
+        }
 
         session()->flash('message', 'Pembelian listrik berhasil dicatat!');
         $this->reset(['purchase_price', 'purchase_price_formatted', 'kwh_bought', 'kwh_before_purchase']);
         $this->purchase_date = now()->format('Y-m-d');
 
         $this->dispatch('refresh-dashboard');
+    }
+
+    /** Simpan satu titik pembacaan meteran pada waktu tertentu. */
+    private function recordCheck(float $kwhRemaining, bool $isEstimated, Carbon $at): void
+    {
+        $check = new ElectricityUsageCheck([
+            'meter_number' => $this->meter_number,
+            'kwh_remaining' => round($kwhRemaining, 2),
+            'is_estimated' => $isEstimated,
+        ]);
+        $check->created_at = $at;
+        $check->updated_at = $at;
+        $check->save();
     }
 
     public function render()
