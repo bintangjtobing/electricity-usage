@@ -28,6 +28,7 @@ class ElectricityDashboard extends Component
     public $totalPurchased = 0;
     public $averagePurchaseAmount = 0;
     public $daysUntilEmpty;
+    public $estimatedEmptyDate;
     public $lastCheckIsEstimated = false;
 
     protected $listeners = ['refresh-dashboard' => 'refresh'];
@@ -83,7 +84,8 @@ class ElectricityDashboard extends Component
                 $this->tokenFrequency = round($this->monthlyProjection / $this->averagePurchaseAmount, 2);
             }
 
-            $this->daysUntilEmpty = (int) floor($this->remainingKwh / $this->dailyAverage);
+            $this->daysUntilEmpty = (int) round($this->remainingKwh / $this->dailyAverage);
+            $this->estimatedEmptyDate = now()->addDays($this->daysUntilEmpty);
         }
 
         $this->setUsageIndicator($setting);
@@ -130,7 +132,9 @@ class ElectricityDashboard extends Component
         $remainingOnPayday = $this->remainingKwh - $projectedUsage;
 
         $this->projectionToPayday = [
+            'paydayDay' => $payday,
             'targetMonth' => $targetDate->translatedFormat('F'),
+            'targetDate' => $targetDate->translatedFormat('d F Y'),
             'daysUntilPayday' => $daysUntilPayday,
             'projectedUsage' => round($projectedUsage, 2),
             'remainingKwh' => round($remainingOnPayday, 2),
@@ -141,7 +145,9 @@ class ElectricityDashboard extends Component
     private function emptyProjection(Setting $setting): array
     {
         return [
+            'paydayDay' => $setting->payday_day,
             'targetMonth' => now()->translatedFormat('F'),
+            'targetDate' => now()->translatedFormat('d F Y'),
             'daysUntilPayday' => 0,
             'projectedUsage' => 0,
             'remainingKwh' => 0,

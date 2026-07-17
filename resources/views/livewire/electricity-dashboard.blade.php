@@ -71,28 +71,39 @@
                             dengan sisa listrik (kWh) sebesar <span class="font-semibold">{{
                                 number_format($remainingKwh, 2) }}</span>.
                         </p>
+                        @php
+                            $usageColor = $dailyAverage > 9 ? 'text-red-400' : ($dailyAverage >= 5 ? 'text-yellow-400' : 'text-green-400');
+                            $usageLabel = $dailyAverage > 9 ? 'cukup boros' : ($dailyAverage >= 5 ? 'standar' : 'hemat');
+                        @endphp
                         <p class="text-gray-300 leading-relaxed mt-3">
-                            Saya merasa bahwa penggunaan harian rata-rata kamu sebesar <span
-                                class="font-semibold {{ $dailyAverage > 10 ? 'text-red-400' : ($dailyAverage > 7 ? 'text-yellow-400' : 'text-green-400') }}">{{
-                                number_format($dailyAverage, 2) }} kWh</span>,
-                            yang berarti ini <span
-                                class="font-semibold {{ $dailyAverage > 10 ? 'text-red-400' : ($dailyAverage > 7 ? 'text-yellow-400' : 'text-green-400') }}">
-                                {{ $dailyAverage > 10 ? 'cukup boros' : ($dailyAverage > 7 ? 'standar' : 'hemat')
-                                }}</span> untukmu.
+                            Rata-rata pemakaian harian kamu sekitar <span
+                                class="font-semibold {{ $usageColor }}">{{ number_format($dailyAverage, 2) }} kWh/hari</span>,
+                            yang berarti ini tergolong <span class="font-semibold {{ $usageColor }}">{{ $usageLabel }}</span>.
+                            Angka ini rata-rata sepanjang riwayat pemakaianmu (total kWh terpakai dibagi total hari), jadi cukup akurat sebagai gambaran umum.
                         </p>
                         <p class="text-gray-300 leading-relaxed mt-3">
-                            Dengan sisa {{ number_format($remainingKwh, 2) }} kWh, untuk sampai tanggal 10 di bulan {{
-                            $projectionToPayday['targetMonth'] }},
-                            itu akan bersisa sekitar <span
+                            Kalau pola ini bertahan, perkiraan pemakaian dalam <span class="font-semibold">sebulan (30 hari)</span> sekitar
+                            <span class="font-semibold text-blue-300">{{ number_format($monthlyProjection, 2) }} kWh</span>,
+                            atau setara sekitar <span class="font-semibold text-green-400">Rp {{ number_format($monthlyCost, 0, ',', '.') }}</span>.
+                        </p>
+                        <p class="text-gray-300 leading-relaxed mt-3">
+                            Dengan sisa <span class="font-semibold">{{ number_format($remainingKwh, 2) }} kWh</span>, listrikmu diperkirakan cukup untuk
+                            @if($dailyAverage > 0)
+                                sekitar <span class="font-semibold">{{ $daysUntilEmpty }} hari lagi</span>
+                                (kira-kira sampai <span class="font-semibold">{{ optional($estimatedEmptyDate)->translatedFormat('d M Y') }}</span>).
+                            @else
+                                beberapa waktu ke depan (belum cukup data untuk estimasi harian).
+                            @endif
+                        </p>
+                        <p class="text-gray-300 leading-relaxed mt-3">
+                            Menuju tanggal gajian berikutnya, yaitu <span class="font-semibold">{{ $projectionToPayday['paydayDay'] }} {{ $projectionToPayday['targetMonth'] }}</span>
+                            (sekitar <span class="font-semibold">{{ $projectionToPayday['daysUntilPayday'] }} hari lagi</span>),
+                            sisa listrik diperkirakan tinggal <span
                                 class="font-semibold {{ $projectionToPayday['remainingKwh'] < 20 ? 'text-red-400' : 'text-green-400' }}">{{
-                                number_format($projectionToPayday['remainingKwh'], 2) }} kWh</span>,
-                            namun ini hanya kemungkinan perhitungannya. Yang harus kamu tau, sisa hari estimasi untuk
-                            sisa kWh tersebut,
-                            sekitar <span class="font-semibold">{{ round($remainingKwh / $dailyAverage, 0) }} hari
-                                lagi</span>.
+                                number_format($projectionToPayday['remainingKwh'], 2) }} kWh</span>.
+                            Ini cuma perkiraan berdasarkan rata-rata, ya.
                             @if($projectionToPayday['needToBuy'])
-                            <span class="text-red-400 font-semibold">⚠️ Kemungkinan kamu perlu beli token sebelum
-                                tanggal gajian!</span>
+                            <span class="text-red-400 font-semibold">⚠️ Kemungkinan kamu perlu beli token sebelum tanggal gajian!</span>
                             @endif
                         </p>
                     </div>
