@@ -72,8 +72,9 @@
                                 number_format($remainingKwh, 2) }}</span>.
                         </p>
                         @php
-                            $usageColor = $dailyAverage > 9 ? 'text-red-400' : ($dailyAverage >= 5 ? 'text-yellow-400' : 'text-green-400');
-                            $usageLabel = $dailyAverage > 9 ? 'cukup boros' : ($dailyAverage >= 5 ? 'standar' : 'hemat');
+                            // Ambil ambang dari Pengaturan supaya sama persis dengan badge indikator.
+                            $usageColor = $dailyAverage > $thresholdBoros ? 'text-red-400' : ($dailyAverage >= $thresholdHemat ? 'text-yellow-400' : 'text-green-400');
+                            $usageLabel = $dailyAverage > $thresholdBoros ? 'cukup boros' : ($dailyAverage >= $thresholdHemat ? 'standar' : 'hemat');
                         @endphp
                         <p class="text-gray-300 leading-relaxed mt-3">
                             Rata-rata pemakaian harian kamu sekitar <span

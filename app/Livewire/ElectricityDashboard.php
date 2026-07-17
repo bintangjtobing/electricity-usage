@@ -29,6 +29,8 @@ class ElectricityDashboard extends Component
     public $averagePurchaseAmount = 0;
     public $daysUntilEmpty;
     public $estimatedEmptyDate;
+    public $thresholdHemat = 0;
+    public $thresholdBoros = 0;
     public $lastCheckIsEstimated = false;
 
     protected $listeners = ['refresh-dashboard' => 'refresh'];
@@ -46,6 +48,9 @@ class ElectricityDashboard extends Component
     public function calculateAnalytics()
     {
         $setting = Setting::current();
+
+        $this->thresholdHemat = (float) $setting->threshold_hemat;
+        $this->thresholdBoros = (float) $setting->threshold_boros;
 
         $this->lastPurchase = ElectricityPurchase::latest()->first();
         $this->lastCheck = ElectricityUsageCheck::latest()->first();
