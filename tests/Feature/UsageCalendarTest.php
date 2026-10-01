@@ -95,6 +95,10 @@ class UsageCalendarTest extends TestCase
         // Setengah hari tercatat: 10 kWh, setara laju 20 kWh/hari.
         $this->assertSame(10.0, $days['2026-09-01']['usage']);
         $this->assertSame(43200, $days['2026-09-01']['coveredSeconds']);
+        $this->assertSame('12:00', $days['2026-09-01']['coveredFrom']->format('H:i'));
+        $this->assertSame('2026-09-02 00:00', $days['2026-09-01']['coveredUntil']->format('Y-m-d H:i'));
+        $this->assertSame('00:00', $days['2026-09-02']['coveredFrom']->format('H:i'));
+        $this->assertSame('12:00', $days['2026-09-02']['coveredUntil']->format('H:i'));
         $this->assertSame(20.0, $days['2026-09-01']['rate']);
     }
 

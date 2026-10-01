@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\ElectricityUsageCheck;
 use App\Models\Setting;
+use App\Support\DecimalInput;
 use Carbon\Carbon;
 use Livewire\Component;
 
@@ -23,6 +24,7 @@ class ElectricityUsageCheckForm extends Component
 
     protected $messages = [
         'check_date.before_or_equal' => 'Tanggal pengecekan tidak boleh di masa depan.',
+        'kwh_remaining.numeric' => 'Sisa kWh harus berupa angka, mis. 62,40 atau 62.40.',
     ];
 
     public function mount()
@@ -33,6 +35,8 @@ class ElectricityUsageCheckForm extends Component
 
     public function submit()
     {
+        $this->kwh_remaining = DecimalInput::normalize($this->kwh_remaining);
+
         $this->validate();
 
         $checkedAt = Carbon::parse($this->check_date)->setTimeFrom(now());

@@ -1,8 +1,8 @@
 <div class="min-h-screen bg-gray-900 py-8">
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-lg p-8">
+        <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-lg p-5 sm:p-8">
             <div class="flex items-center justify-between mb-8">
-                <h2 class="text-3xl font-bold text-white">Cek Sisa Listrik</h2>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white">Cek Sisa Listrik</h2>
                 <a href="{{ route('dashboard') }}" 
                    class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition duration-300">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,13 +66,15 @@
                         Sisa kWh di Meteran <span class="text-red-500">*</span>
                     </label>
                     <div class="relative">
-                        <input type="number" 
+                        {{-- type="text": koma dari keyboard HP berlokal Indonesia membuat
+                             input number kosong. Dinormalisasi di server. --}}
+                        <input type="text"
                                id="kwh_remaining"
-                               wire:model="kwh_remaining" 
-                               step="0.01"
+                               wire:model="kwh_remaining"
                                inputmode="decimal"
+                               autocomplete="off"
                                class="block w-full px-4 py-4 text-lg border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 @error('kwh_remaining') border-red-500 @enderror"
-                               placeholder="Contoh: 62.40">
+                               placeholder="Contoh: 62,40 atau 62.40">
                         <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                             <span class="text-gray-400 text-lg font-medium">kWh</span>
                         </div>
@@ -104,7 +106,7 @@
                     <ul class="text-sm text-yellow-300 space-y-1 ml-6">
                         <li>• Tekan tombol pada meter listrik</li>
                         <li>• Tunggu hingga muncul angka sisa kWh</li>
-                        <li>• Masukkan angka tersebut (gunakan titik untuk desimal)</li>
+                        <li>• Masukkan angka tersebut (koma atau titik boleh)</li>
                     </ul>
                 </div>
 

@@ -170,8 +170,14 @@
                         $lastCheck = $day['checks']->last();
                         $dayTone = $tone($day['rate']);
                         $partial = $day['usage'] !== null && $day['coveredSeconds'] < 86400 - 60;
+                        $hasData = $day['purchases']->isNotEmpty() || $lastCheck || $day['usage'] !== null;
                     @endphp
-                    <div class="min-h-[84px] sm:min-h-[118px] p-0.5 sm:p-1.5 border-r border-gray-700 last:border-r-0 {{ $day['inMonth'] ? '' : 'bg-gray-900/50' }}"
+                    {{-- Di HP badge cuma ~17px, terlalu kecil untuk jari: ketuk di mana pun
+                         dalam sel membuka panel berisi semua catatan tanggal itu. --}}
+                    <div class="min-h-[84px] sm:min-h-[118px] p-0.5 sm:p-1.5 border-r border-gray-700 last:border-r-0 {{ $day['inMonth'] ? '' : 'bg-gray-900/50' }} {{ $hasData ? 'cursor-pointer sm:cursor-default active:bg-gray-700/60 sm:active:bg-transparent' : '' }}"
+                         {{-- Kondisi ditaruh di JS, bukan direktif if Blade di dalam tag: Livewire
+                              menyisipkan komentar penanda di setiap blok if, dan di dalam tag itu merusak HTML. --}}
+                         x-on:click="if ({{ $hasData ? 'true' : 'false' }} && window.innerWidth < 640) { $event.stopPropagation(); show('{{ $day['key'] }}-hari', $el) }"
                          wire:key="cell-{{ $day['key'] }}">
                         <div class="flex justify-center mb-1">
                             <span class="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full text-xs sm:text-sm
@@ -183,8 +189,8 @@
                         <div class="space-y-0.5 sm:space-y-1 {{ $day['inMonth'] ? '' : 'opacity-60' }}">
                             @if ($day['purchases']->isNotEmpty())
                                 <button type="button"
-                                        x-on:click.stop="show('{{ $day['key'] }}-beli', $el)"
-                                        :class="open === '{{ $day['key'] }}-beli' && 'ring-2 ring-white/70'"
+                                        x-on:click="if (window.innerWidth >= 640) { $event.stopPropagation(); show('{{ $day['key'] }}-beli', $el) }"
+                                        :class="['{{ $day['key'] }}-beli', '{{ $day['key'] }}-hari'].includes(open) && 'ring-2 ring-white/70'"
                                         aria-label="Pembelian {{ $day['date']->copy()->locale('id')->translatedFormat('j F') }}"
                                         class="w-full rounded px-1 sm:px-1.5 py-0.5 text-left text-[10px] sm:text-xs font-semibold leading-tight text-white bg-emerald-600 hover:bg-emerald-500 truncate transition-colors">
                                     <span class="hidden sm:inline">Beli </span>{{ $shortRp($day['purchases']->sum('purchase_price')) }}@if ($day['purchases']->count() > 1)<span class="font-normal opacity-80"> &times;{{ $day['purchases']->count() }}</span>@endif
@@ -193,8 +199,8 @@
 
                             @if ($lastCheck)
                                 <button type="button"
-                                        x-on:click.stop="show('{{ $day['key'] }}-sisa', $el)"
-                                        :class="open === '{{ $day['key'] }}-sisa' && 'bg-gray-700'"
+                                        x-on:click="if (window.innerWidth >= 640) { $event.stopPropagation(); show('{{ $day['key'] }}-sisa', $el) }"
+                                        :class="['{{ $day['key'] }}-sisa', '{{ $day['key'] }}-hari'].includes(open) && 'bg-gray-700'"
                                         aria-label="Sisa meteran {{ $day['date']->copy()->locale('id')->translatedFormat('j F') }}"
                                         class="w-full flex items-center gap-1 rounded px-1 sm:px-1.5 py-0.5 text-left text-[10px] sm:text-xs leading-tight text-gray-200 hover:bg-gray-700 transition-colors">
                                     <span class="shrink-0 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full {{ $lastCheck->is_estimated ? 'bg-amber-400' : 'bg-sky-400' }}"></span>
@@ -207,8 +213,8 @@
 
                             @if ($day['usage'] !== null)
                                 <button type="button"
-                                        x-on:click.stop="show('{{ $day['key'] }}-total', $el)"
-                                        :class="open === '{{ $day['key'] }}-total' && 'bg-gray-700'"
+                                        x-on:click="if (window.innerWidth >= 640) { $event.stopPropagation(); show('{{ $day['key'] }}-total', $el) }"
+                                        :class="['{{ $day['key'] }}-total', '{{ $day['key'] }}-hari'].includes(open) && 'bg-gray-700'"
                                         aria-label="Total pemakaian {{ $day['date']->copy()->locale('id')->translatedFormat('j F') }}"
                                         class="w-full flex items-center gap-1 rounded px-1 sm:px-1.5 py-0.5 text-left text-[10px] sm:text-xs leading-tight text-gray-300 hover:bg-gray-700 transition-colors {{ $partial ? 'italic' : '' }}">
                                     <span class="shrink-0 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full {{ $toneDot[$dayTone] }}"></span>
@@ -226,7 +232,7 @@
 
     <p class="mt-3 text-xs text-gray-500">
         Total = perkiraan kWh terpakai per tanggal: pemakaian di antara dua bacaan meteran dibagi rata per jam.
-        Miring = hari yang baru tercatat sebagian. Klik badge untuk detail, edit, atau hapus.
+        Miring = hari yang baru tercatat sebagian. <span class="hidden sm:inline">Klik badge</span><span class="sm:hidden">Ketuk tanggal</span> untuk detail, edit, atau hapus.
     </p>
 
     {{-- Latar gelap untuk bottom sheet di HP --}}
@@ -245,18 +251,27 @@
             @foreach ($week as $day)
                 @php
                     $dateLabel = $day['date']->copy()->locale('id')->translatedFormat('l, j F Y');
+                    $dayKey = $day['key'] . '-hari';
                 @endphp
+
+                {{-- Mode hari (HP): satu judul tanggal, lalu semua bagian di bawahnya --}}
+                @if ($day['purchases']->isNotEmpty() || $day['checks']->isNotEmpty() || $day['usage'] !== null)
+                    <div x-show="open === '{{ $dayKey }}'" wire:key="pop-{{ $day['key'] }}-hari" class="px-4 pt-3 pb-1 flex items-center gap-3">
+                        <h3 class="flex-1 text-lg text-white">{{ $dateLabel }}</h3>
+                        <button type="button" x-on:click="close()" aria-label="Tutup" class="{{ $iconButton }} -mr-2">{!! $icon($paths['close']) !!}</button>
+                    </div>
+                @endif
 
                 {{-- Pembelian --}}
                 @if ($day['purchases']->isNotEmpty())
-                    <div x-show="open === '{{ $day['key'] }}-beli'" wire:key="pop-{{ $day['key'] }}-beli" class="p-4 sm:p-5">
+                    <div x-show="['{{ $day['key'] }}-beli', '{{ $dayKey }}'].includes(open)" wire:key="pop-{{ $day['key'] }}-beli" class="p-4 sm:p-5" :class="open === '{{ $dayKey }}' && 'border-t border-gray-700'">
                         <div class="flex items-start gap-3">
                             <span class="mt-1.5 w-4 h-4 rounded bg-emerald-600 shrink-0"></span>
                             <div class="flex-1 min-w-0">
                                 <h3 class="text-lg sm:text-xl text-white">Pembelian Token</h3>
-                                <p class="text-sm text-gray-400">{{ $dateLabel }}</p>
+                                <p class="text-sm text-gray-400" x-show="open !== '{{ $dayKey }}'">{{ $dateLabel }}</p>
                             </div>
-                            <button type="button" x-on:click="close()" aria-label="Tutup" class="{{ $iconButton }} -mt-1 -mr-2">{!! $icon($paths['close']) !!}</button>
+                            <button type="button" x-on:click="close()" x-show="open !== '{{ $dayKey }}'" aria-label="Tutup" class="{{ $iconButton }} -mt-1 -mr-2">{!! $icon($paths['close']) !!}</button>
                         </div>
 
                         @foreach ($day['purchases'] as $purchase)
@@ -342,14 +357,14 @@
 
                 {{-- Sisa meteran --}}
                 @if ($day['checks']->isNotEmpty())
-                    <div x-show="open === '{{ $day['key'] }}-sisa'" wire:key="pop-{{ $day['key'] }}-sisa" class="p-4 sm:p-5">
+                    <div x-show="['{{ $day['key'] }}-sisa', '{{ $dayKey }}'].includes(open)" wire:key="pop-{{ $day['key'] }}-sisa" class="p-4 sm:p-5" :class="open === '{{ $dayKey }}' && 'border-t border-gray-700'">
                         <div class="flex items-start gap-3">
                             <span class="mt-1.5 w-4 h-4 rounded-full bg-sky-400 shrink-0"></span>
                             <div class="flex-1 min-w-0">
                                 <h3 class="text-lg sm:text-xl text-white">Sisa Meteran</h3>
-                                <p class="text-sm text-gray-400">{{ $dateLabel }} &middot; {{ $day['checks']->count() }} catatan</p>
+                                <p class="text-sm text-gray-400"><span x-show="open !== '{{ $dayKey }}'">{{ $dateLabel }} &middot; </span>{{ $day['checks']->count() }} catatan</p>
                             </div>
-                            <button type="button" x-on:click="close()" aria-label="Tutup" class="{{ $iconButton }} -mt-1 -mr-2">{!! $icon($paths['close']) !!}</button>
+                            <button type="button" x-on:click="close()" x-show="open !== '{{ $dayKey }}'" aria-label="Tutup" class="{{ $iconButton }} -mt-1 -mr-2">{!! $icon($paths['close']) !!}</button>
                         </div>
 
                         <div class="mt-3 divide-y divide-gray-700">
@@ -419,14 +434,14 @@
                         $dayTone = $tone($day['rate']);
                         $coveredHours = $day['coveredSeconds'] / 3600;
                     @endphp
-                    <div x-show="open === '{{ $day['key'] }}-total'" wire:key="pop-{{ $day['key'] }}-total" class="p-4 sm:p-5">
+                    <div x-show="['{{ $day['key'] }}-total', '{{ $dayKey }}'].includes(open)" wire:key="pop-{{ $day['key'] }}-total" class="p-4 sm:p-5" :class="open === '{{ $dayKey }}' && 'border-t border-gray-700'">
                         <div class="flex items-start gap-3">
                             <span class="mt-1.5 w-4 h-4 rounded-full {{ $toneDot[$dayTone] }} shrink-0"></span>
                             <div class="flex-1 min-w-0">
                                 <h3 class="text-lg sm:text-xl text-white">Total Pemakaian</h3>
-                                <p class="text-sm text-gray-400">{{ $dateLabel }}</p>
+                                <p class="text-sm text-gray-400" x-show="open !== '{{ $dayKey }}'">{{ $dateLabel }}</p>
                             </div>
-                            <button type="button" x-on:click="close()" aria-label="Tutup" class="{{ $iconButton }} -mt-1 -mr-2">{!! $icon($paths['close']) !!}</button>
+                            <button type="button" x-on:click="close()" x-show="open !== '{{ $dayKey }}'" aria-label="Tutup" class="{{ $iconButton }} -mt-1 -mr-2">{!! $icon($paths['close']) !!}</button>
                         </div>
 
                         <div class="mt-4 space-y-3 text-sm text-gray-200">
@@ -436,7 +451,9 @@
                                     <p><span class="text-2xl font-bold text-white tabular-nums">&asymp; {{ number_format($day['usage'], 2) }}</span> <span class="text-gray-400">kWh terpakai</span></p>
                                     @if ($coveredHours < 23.98)
                                         <p class="text-xs text-gray-400">
-                                            {{ $day['isToday'] ? 'Baru tercatat' : 'Hanya tercatat' }} {{ number_format($coveredHours, 1) }} jam &middot; laju
+                                            {{-- Rentang jam, bukan "X jam": "12.1 jam" sempat terbaca "12 jam yang lalu". --}}
+                                            Tercatat pukul {{ $day['coveredFrom']->format('H:i') }}&ndash;{{ $day['coveredUntil']->isSameDay($day['date']) ? $day['coveredUntil']->format('H:i') : '24:00' }}
+                                            ({{ number_format($coveredHours, 1) }} jam){{ $day['isToday'] ? ', s.d. bacaan terakhir' : '' }} &middot; laju
                                             <span class="{{ $toneText[$dayTone] }}">{{ number_format($day['rate'], 2) }} kWh/hari ({{ $toneLabel[$dayTone] }})</span>
                                         </p>
                                     @else

@@ -1,8 +1,8 @@
 <div class="min-h-screen bg-gray-900 py-8">
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-700">
+        <div class="bg-gray-800 rounded-xl shadow-lg p-5 sm:p-8 border border-gray-700">
             <div class="flex items-center justify-between mb-8">
-                <h2 class="text-3xl font-bold text-white">Form Pembelian Listrik</h2>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white">Form Pembelian Listrik</h2>
                 <a href="{{ route('dashboard') }}" 
                    class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition duration-300">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,12 +25,12 @@
 
             <form wire:submit="submit" class="space-y-6">
                 <!-- Info Meter -->
-                <div class="bg-gray-700 rounded-lg p-6 border-l-4 border-blue-500">
-                    <h3 class="text-lg font-semibold text-white mb-4">Informasi Meter</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                <div class="bg-gray-700 rounded-lg p-4 sm:p-6 border-l-4 border-blue-500">
+                    <h3 class="text-lg font-semibold text-white mb-3 sm:mb-4">Informasi Meter</h3>
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div class="col-span-2 md:col-span-1">
                             <label class="block text-sm font-medium text-gray-300 mb-1">Alamat</label>
-                            <p class="text-sm text-gray-400">{{ $address }}</p>
+                            <p class="text-sm text-gray-400 line-clamp-2 md:line-clamp-none" title="{{ $address }}">{{ $address }}</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-1">No Meter</label>
@@ -85,11 +85,11 @@
                         @error('purchase_price')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
-                        <div class="mt-2 flex flex-wrap gap-2">
+                        <div class="mt-2 grid grid-cols-4 gap-2 sm:flex sm:flex-wrap">
                             @foreach ($quickAmounts as $amount)
                                 <button type="button"
                                         wire:click="setAmount({{ $amount }})"
-                                        class="px-3 py-1 text-xs font-medium rounded-full bg-gray-600 text-gray-200 hover:bg-blue-600 hover:text-white transition-colors">
+                                        class="px-2 py-2 sm:px-3 sm:py-1 text-sm sm:text-xs font-medium rounded-full bg-gray-600 text-gray-200 hover:bg-blue-600 hover:text-white transition-colors">
                                     {{ number_format($amount / 1000, 0, ',', '.') }}rb
                                 </button>
                             @endforeach

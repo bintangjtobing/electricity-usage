@@ -14,7 +14,7 @@
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
             <div>
-                <h1 class="text-3xl font-bold text-white">Dashboard Monitoring Listrik</h1>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white">Dashboard Monitoring Listrik</h1>
                 <p class="text-gray-400 mt-2">Monitor penggunaan listrik Anda secara real-time</p>
             </div>
             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
@@ -51,9 +51,9 @@
 
         <!-- AI Assistant Message -->
         <div class="mb-8">
-            <div class="bg-gradient-to-r from-gray-800 to-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
-                <div class="flex items-start space-x-4">
-                    <div class="flex-shrink-0">
+            <div class="bg-gradient-to-r from-gray-800 to-gray-800 rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-blue-500">
+                <div class="flex items-start sm:space-x-4">
+                    <div class="hidden sm:block flex-shrink-0">
                         <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -114,20 +114,20 @@
 
         <!-- Usage Chart -->
         <div class="mb-8">
-            <div class="bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-700">
-                <div class="flex items-center justify-between mb-6">
+            <div class="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-8 border border-gray-700">
+                <div class="flex items-start justify-between gap-3 mb-4 sm:mb-6">
                     <div>
-                        <h2 class="text-2xl font-bold text-white">Grafik Penggunaan Listrik</h2>
-                        <p class="text-gray-400 mt-1">Tracking sisa kWh dan pembelian token</p>
+                        <h2 class="text-xl sm:text-2xl font-bold text-white">Grafik Penggunaan Listrik</h2>
+                        <p class="text-sm sm:text-base text-gray-400 mt-1">Tracking sisa kWh dan pembelian token</p>
                     </div>
                     <div class="text-right">
-                        <div class="inline-block px-4 py-2 rounded-lg {{ $usageIndicatorColor }}">
+                        <div class="inline-block px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg {{ $usageIndicatorColor }}">
                             <span class="text-white font-bold">{{ $usageIndicator }}</span>
                         </div>
-                        <p class="text-sm text-gray-400 mt-1">{{ number_format($dailyAverage, 2) }} kWh/hari</p>
+                        <p class="text-xs sm:text-sm text-gray-400 mt-1 whitespace-nowrap">{{ number_format($dailyAverage, 2) }} kWh/hari</p>
                     </div>
                 </div>
-                <div class="relative h-96">
+                <div class="relative h-80 sm:h-96">
                     <canvas id="usageChart"></canvas>
                 </div>
             </div>
@@ -137,6 +137,9 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const ctx = document.getElementById('usageChart');
+                // Di HP area grafik cuma ~290px: judul sumbu & satuan di tick
+                // disembunyikan, titik diperkecil supaya garisnya tetap terbaca.
+                const isMobile = window.innerWidth < 640;
                 if (ctx) {
                     new Chart(ctx, {
                         type: 'line',
@@ -147,10 +150,13 @@
                                 data: @json($chartData['kwh'] ?? []),
                                 borderColor: 'rgb(59, 130, 246)',
                                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                borderWidth: 3,
+                                borderWidth: isMobile ? 2 : 3,
                                 tension: 0.4,
+                                // monotone: kurva tidak melengkung melewati titik
+                                // data (dulu sempat tampak turun di bawah 0 kWh).
+                                cubicInterpolationMode: 'monotone',
                                 fill: true,
-                                pointRadius: 5,
+                                pointRadius: isMobile ? 3 : 5,
                                 pointHoverRadius: 7,
                                 pointBackgroundColor: 'rgb(59, 130, 246)',
                                 pointBorderColor: '#fff',
@@ -161,11 +167,11 @@
                                 borderColor: 'rgb(245, 158, 11)',
                                 backgroundColor: 'rgb(245, 158, 11)',
                                 borderWidth: 0,
-                                pointRadius: 12,
-                                pointHoverRadius: 15,
+                                pointRadius: isMobile ? 7 : 12,
+                                pointHoverRadius: isMobile ? 9 : 15,
                                 pointBackgroundColor: 'rgb(245, 158, 11)',
                                 pointBorderColor: 'rgb(217, 119, 6)',
-                                pointBorderWidth: 4,
+                                pointBorderWidth: isMobile ? 2 : 4,
                                 pointStyle: 'rectRot',
                                 showLine: false,
                                 order: 0
@@ -176,8 +182,9 @@
                                 backgroundColor: 'rgba(239, 68, 68, 0.1)',
                                 borderWidth: 2,
                                 tension: 0.3,
+                                cubicInterpolationMode: 'monotone',
                                 fill: false,
-                                pointRadius: 4,
+                                pointRadius: isMobile ? 3 : 4,
                                 pointHoverRadius: 6,
                                 pointBackgroundColor: 'rgb(239, 68, 68)',
                                 pointBorderColor: '#fff',
@@ -200,9 +207,10 @@
                                     position: 'top',
                                     labels: {
                                         usePointStyle: true,
-                                        padding: 20,
+                                        padding: isMobile ? 10 : 20,
+                                        boxWidth: isMobile ? 8 : 12,
                                         font: {
-                                            size: 12,
+                                            size: isMobile ? 10 : 12,
                                             weight: 'bold'
                                         },
                                         color: '#d1d5db'
@@ -225,7 +233,7 @@
                                                 label += ': ';
                                             }
                                             if (context.parsed.y !== null) {
-                                                label += context.parsed.y + ' kWh';
+                                                label += context.parsed.y + (context.dataset.yAxisID === 'y1' ? ' kWh/hari' : ' kWh');
                                             }
                                             return label;
                                         }
@@ -238,7 +246,7 @@
                                     position: 'left',
                                     beginAtZero: true,
                                     title: {
-                                        display: true,
+                                        display: !isMobile,
                                         text: 'Sisa kWh',
                                         font: {
                                             size: 12,
@@ -248,7 +256,7 @@
                                     },
                                     ticks: {
                                         callback: function(value) {
-                                            return value + ' kWh';
+                                            return isMobile ? value : value + ' kWh';
                                         },
                                         font: {
                                             size: 11
@@ -263,9 +271,11 @@
                                     type: 'linear',
                                     position: 'right',
                                     beginAtZero: true,
-                                    max: 20,
+                                    // suggestedMax, bukan max: hari di atas 20 kWh
+                                    // (mis. 20,56 pada 17 Jul) dulu terpotong keluar grafik.
+                                    suggestedMax: 20,
                                     title: {
-                                        display: true,
+                                        display: !isMobile,
                                         text: 'Penggunaan Harian (kWh/hari)',
                                         font: {
                                             size: 12,
@@ -275,7 +285,7 @@
                                     },
                                     ticks: {
                                         callback: function(value) {
-                                            return value + ' kWh/hari';
+                                            return isMobile ? value : value + ' kWh/hari';
                                         },
                                         font: {
                                             size: 11
@@ -435,8 +445,8 @@
         <!-- Projections Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- Proyeksi Bulanan -->
-            <div class="bg-gray-800 rounded-xl shadow-lg p-8 border-t-4 border-blue-500">
-                <h3 class="text-2xl font-bold text-white mb-2 flex items-center">
+            <div class="bg-gray-800 rounded-xl shadow-lg p-5 sm:p-8 border-t-4 border-blue-500">
+                <h3 class="text-xl sm:text-2xl font-bold text-white mb-2 flex items-center">
                     <svg class="w-6 h-6 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
@@ -448,27 +458,27 @@
                     number_format($dailyAverage, 2) }} kWh/hari</p>
                 <div class="space-y-4">
                     <div class="p-4 bg-gray-700 rounded-lg">
-                        <div class="flex justify-between items-center mb-1">
+                        <div class="flex flex-wrap justify-between items-baseline gap-x-3 mb-1">
                             <span class="text-gray-300 font-medium">Penggunaan 1 Bulan:</span>
-                            <span class="text-xl font-bold text-white">{{ number_format($monthlyProjection, 2) }}
+                            <span class="whitespace-nowrap text-lg sm:text-xl font-bold text-white">{{ number_format($monthlyProjection, 2) }}
                                 kWh</span>
                         </div>
                         <p class="text-xs text-gray-400 mt-1">{{ number_format($dailyAverage, 2) }} kWh/hari × 30 hari
                         </p>
                     </div>
                     <div class="p-4 bg-gray-700 rounded-lg">
-                        <div class="flex justify-between items-center mb-1">
+                        <div class="flex flex-wrap justify-between items-baseline gap-x-3 mb-1">
                             <span class="text-gray-300 font-medium">Biaya 1 Bulan:</span>
-                            <span class="text-xl font-bold text-green-600">Rp {{ number_format($monthlyCost, 0, ',',
+                            <span class="whitespace-nowrap text-lg sm:text-xl font-bold text-green-600">Rp {{ number_format($monthlyCost, 0, ',',
                                 '.') }}</span>
                         </div>
                         <p class="text-xs text-gray-400 mt-1">{{ number_format($monthlyProjection, 2) }} kWh × Rp {{
                             number_format($pricePerUnit, 0, ',', '.') }}/kWh</p>
                     </div>
                     <div class="p-4 bg-gray-700 rounded-lg">
-                        <div class="flex justify-between items-center mb-1">
+                        <div class="flex flex-wrap justify-between items-baseline gap-x-3 mb-1">
                             <span class="text-gray-300 font-medium">Frekuensi Beli Token:</span>
-                            <span class="text-xl font-bold text-blue-600">{{ number_format($tokenFrequency, 1) }}x per
+                            <span class="whitespace-nowrap text-lg sm:text-xl font-bold text-blue-600">{{ number_format($tokenFrequency, 1) }}x per
                                 bulan</span>
                         </div>
                         <p class="text-xs text-gray-400 mt-1">{{ number_format($monthlyProjection, 2) }} kWh ÷ {{
@@ -478,8 +488,8 @@
             </div>
 
             <!-- Analisa Bulanan -->
-            <div class="bg-gray-800 rounded-xl shadow-lg p-8 border-t-4 border-green-500">
-                <h3 class="text-2xl font-bold text-white mb-2 flex items-center">
+            <div class="bg-gray-800 rounded-xl shadow-lg p-5 sm:p-8 border-t-4 border-green-500">
+                <h3 class="text-xl sm:text-2xl font-bold text-white mb-2 flex items-center">
                     <svg class="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
@@ -489,25 +499,25 @@
                 <p class="text-sm text-gray-400 mb-6">Prediksi berdasarkan data historis penggunaan</p>
                 <div class="space-y-4">
                     <div class="p-4 bg-gray-700 rounded-lg">
-                        <div class="flex justify-between items-center mb-1">
+                        <div class="flex flex-wrap justify-between items-baseline gap-x-3 mb-1">
                             <span class="text-gray-300 font-medium">Estimasi Bulan Depan:</span>
-                            <span class="text-xl font-bold text-white">{{ number_format($nextMonthEstimate, 2) }}
+                            <span class="whitespace-nowrap text-lg sm:text-xl font-bold text-white">{{ number_format($nextMonthEstimate, 2) }}
                                 kWh</span>
                         </div>
                         <p class="text-xs text-gray-400 mt-1">Berdasarkan trend penggunaan historis</p>
                     </div>
                     <div class="p-4 bg-gray-700 rounded-lg">
-                        <div class="flex justify-between items-center mb-1">
+                        <div class="flex flex-wrap justify-between items-baseline gap-x-3 mb-1">
                             <span class="text-gray-300 font-medium">Estimasi Biaya:</span>
-                            <span class="text-xl font-bold text-green-600">Rp {{ number_format($monthlyCost, 0, ',',
+                            <span class="whitespace-nowrap text-lg sm:text-xl font-bold text-green-600">Rp {{ number_format($monthlyCost, 0, ',',
                                 '.') }}</span>
                         </div>
                         <p class="text-xs text-gray-400 mt-1">{{ number_format($nextMonthEstimate, 2) }} kWh × Rp {{ number_format($pricePerUnit, 0, ',', '.') }}/kWh</p>
                     </div>
                     <div class="p-4 bg-gray-700 rounded-lg">
-                        <div class="flex justify-between items-center mb-1">
+                        <div class="flex flex-wrap justify-between items-baseline gap-x-3 mb-1">
                             <span class="text-gray-300 font-medium">Proyeksi Sisa Bulanan:</span>
-                            <span class="text-xl font-bold text-blue-600">{{ number_format(max(0, $averagePurchaseAmount
+                            <span class="whitespace-nowrap text-lg sm:text-xl font-bold text-blue-600">{{ number_format(max(0, $averagePurchaseAmount
                                 - $monthlyProjection), 2) }} kWh</span>
                         </div>
                         <p class="text-xs text-gray-400 mt-1">Jika beli {{ number_format($averagePurchaseAmount, 2) }} kWh dan pakai {{ number_format($monthlyProjection, 2) }} kWh</p>

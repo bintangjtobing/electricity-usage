@@ -61,6 +61,8 @@ class UsageCalendar
                 'checks' => $dayChecks,
                 'usage' => $dayUsage ? round($dayUsage['usage'], 2) : null,
                 'coveredSeconds' => $dayUsage['seconds'] ?? 0,
+                'coveredFrom' => $dayUsage['from'] ?? null,
+                'coveredUntil' => $dayUsage['until'] ?? null,
                 // Laju per 24 jam, supaya hari yang baru tercatat sebagian
                 // (mis. hari ini) dinilai hemat/boros secara adil.
                 'rate' => $dayUsage && $dayUsage['seconds'] > 0
@@ -101,7 +103,7 @@ class UsageCalendar
      * dibagi rata per detik, lalu dijumlah per tanggal -- tanggal tanpa
      * pembacaan pun tetap punya perkiraan.
      *
-     * @return array<string, array{usage: float, seconds: int, intervals: list<array>}>
+     * @return array<string, array{usage: float, seconds: int, from: Carbon, until: Carbon, intervals: list<array>}>
      */
     public static function dailyUsage(Carbon $from, Carbon $to): array
     {
@@ -121,17 +123,21 @@ class UsageCalendar
             $day = $start->copy()->max($from)->copy()->startOfDay();
 
             for (; $day->lt($end) && $day->lte($to); $day->addDay()) {
-                $overlap = $day->copy()->max($start)
-                    ->diffInSeconds($day->copy()->addDay()->min($end));
+                $overlapStart = $day->copy()->max($start)->copy();
+                $overlapEnd = $day->copy()->addDay()->min($end)->copy();
+                $overlap = $overlapStart->diffInSeconds($overlapEnd);
 
                 if ($overlap === 0) {
                     continue;
                 }
 
                 $key = $day->format('Y-m-d');
-                $days[$key] ??= ['usage' => 0.0, 'seconds' => 0, 'intervals' => []];
+                $days[$key] ??= ['usage' => 0.0, 'seconds' => 0, 'from' => $overlapStart, 'until' => $overlapEnd, 'intervals' => []];
                 $days[$key]['usage'] += $perSecond * $overlap;
                 $days[$key]['seconds'] += $overlap;
+                // Jam yang tercakup bacaan meteran, untuk label "Tercatat 00:00-12:08".
+                $days[$key]['from'] = $days[$key]['from']->min($overlapStart)->copy();
+                $days[$key]['until'] = $days[$key]['until']->max($overlapEnd)->copy();
 
                 // Selang < 1 jam (pasangan sebelum/sesudah top-up) tidak
                 // menjelaskan apa-apa di rincian, cukup ikut dijumlah.

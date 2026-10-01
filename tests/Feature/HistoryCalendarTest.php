@@ -56,6 +56,18 @@ class HistoryCalendarTest extends TestCase
             ->assertSee('sebelum top-up');
     }
 
+    public function test_livewire_block_markers_never_land_inside_a_tag(): void
+    {
+        // Penanda <!--[if BLOCK]--> dari blok if Livewire yang ditaruh di dalam
+        // tag membuat atribut sel kalender tampil sebagai teks mentah.
+        $this->check('2026-10-01 11:59:59', 10);
+        $this->purchase('2026-10-01 12:00:00');
+
+        $html = Livewire::test(ElectricityHistory::class)->html();
+
+        $this->assertDoesNotMatchRegularExpression('/<[a-zA-Z][^<>]*<!--\[if/', $html);
+    }
+
     public function test_month_navigation(): void
     {
         Livewire::test(ElectricityHistory::class)
@@ -127,5 +139,15 @@ class HistoryCalendarTest extends TestCase
         // 20 Sep (bacaan nyata), bukan dari titik estimasi. Pasangan top-up
         // (selang 2 detik) null, bukan anjlok ke 0.
         $this->assertSame([null, null, 20.0, 20.0, null], $daily);
+    }
+
+    public function test_meter_check_form_accepts_a_comma_decimal(): void
+    {
+        Livewire::test(\App\Livewire\ElectricityUsageCheckForm::class)
+            ->set('kwh_remaining', '62,4')
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $this->assertSame(62.4, ElectricityUsageCheck::latest('id')->first()->kwh_remaining);
     }
 }
