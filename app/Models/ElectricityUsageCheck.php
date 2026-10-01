@@ -24,4 +24,13 @@ class ElectricityUsageCheck extends Model
     {
         return $query->where('is_estimated', false);
     }
+
+    /** Titik ini dicatat otomatis oleh form pembelian ({@see ElectricityPurchase::attachedChecks()}). */
+    public function isFromPurchase(): bool
+    {
+        return ElectricityPurchase::whereBetween('created_at', [
+            $this->created_at->copy()->subSeconds(ElectricityPurchase::ATTACHED_CHECK_SECONDS),
+            $this->created_at->copy()->addSeconds(ElectricityPurchase::ATTACHED_CHECK_SECONDS),
+        ])->exists();
+    }
 }

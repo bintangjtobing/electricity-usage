@@ -45,9 +45,12 @@ class KwhConfirmationModal extends Component
         // Dulu modal ini muncul di setiap kunjungan, bahkan ketika meteran baru
         // saja dicek -- tidak ada gunanya bertanya dan justru mengganggu.
         // Sekarang hanya muncul kalau angkanya memang perlu dikonfirmasi:
-        // catatannya sudah basi, atau angka terakhir cuma hasil tebakan.
+        // catatannya sudah basi, atau angka terakhir tebakan form pembelian
+        // (sisa sebelum beli tidak diisi). Estimasi hasil klik "Ya" di modal
+        // ini sendiri tidak dihitung -- dulu modal jadi muncul lagi di setiap
+        // kunjungan setelah dijawab.
         $this->showModal = $daysSinceLastCheck >= self::STALE_AFTER_DAYS
-            || (bool) $lastCheck->is_estimated;
+            || ($lastCheck->is_estimated && $lastCheck->isFromPurchase());
     }
     
     public function confirmYes()

@@ -111,6 +111,37 @@ class UsageCalculator
             - (float) $curr->kwh_remaining;
     }
 
+    /**
+     * Selang antar pembacaan meteran nyata (bukan estimasi), berurutan waktu.
+     *
+     * Titik estimasi dilewati karena nilainya tebakan -- mis. "sisa terakhir +
+     * dibeli" menganggap tidak ada pemakaian sejak cek terakhir, sehingga selang
+     * sebelum titik itu tampak 0 dan selang sesudahnya membengkak (1-15 Juni di
+     * produksi). Rumus pemakaian berantai, jadi total di antara dua bacaan
+     * nyata tetap sama persis.
+     *
+     * @return list<array{from: ElectricityUsageCheck, to: ElectricityUsageCheck, usage: float, seconds: int}>
+     */
+    public static function measuredIntervals(): array
+    {
+        $checks = ElectricityUsageCheck::measured()->orderBy('created_at', 'asc')->get();
+        $intervals = [];
+
+        for ($i = 1; $i < $checks->count(); $i++) {
+            $from = $checks[$i - 1];
+            $to = $checks[$i];
+
+            $intervals[] = [
+                'from' => $from,
+                'to' => $to,
+                'usage' => max(0.0, round(self::usageBetween($from, $to), 2)),
+                'seconds' => $from->created_at->diffInSeconds($to->created_at),
+            ];
+        }
+
+        return $intervals;
+    }
+
     /** Total kWh yang dibeli dalam selang (from, to]. */
     public static function kwhBoughtBetween($from, $to): float
     {

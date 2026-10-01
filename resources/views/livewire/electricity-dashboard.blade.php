@@ -183,6 +183,7 @@
                                 pointBorderColor: '#fff',
                                 pointBorderWidth: 2,
                                 borderDash: [5, 5],
+                                spanGaps: true,
                                 yAxisID: 'y1'
                             }]
                         },
@@ -304,9 +305,13 @@
                 }
             });
 
-            // Re-render chart when Livewire refreshes
-            Livewire.on('refresh-dashboard', () => {
-                location.reload();
+            // Re-render chart when Livewire refreshes. Script ini jalan sebelum skrip
+            // Livewire dimuat, jadi tunggu livewire:init -- dulu langsung
+            // memanggil Livewire.on dan gagal (ReferenceError) di setiap kunjungan.
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('refresh-dashboard', () => {
+                    location.reload();
+                });
             });
         </script>
 

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\KwhConfirmationModal;
+use App\Models\ElectricityPurchase;
 use App\Models\ElectricityUsageCheck;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,12 +49,31 @@ class ConfirmationModalTest extends TestCase
             ->assertSet('showModal', true);
     }
 
-    public function test_modal_appears_when_the_latest_value_is_only_an_estimate(): void
+    public function test_modal_appears_when_the_latest_value_is_a_purchase_estimate(): void
     {
-        $this->check(now()->subHours(2)->toDateTimeString(), estimated: true);
+        // Pembelian tanpa "sisa sebelum beli": saldo sesudahnya cuma tebakan.
+        $at = now()->subHours(2)->toDateTimeString();
+        ElectricityPurchase::forceCreate([
+            'meter_number' => 'M1', 'owner_name' => 'X', 'tariff_type' => 'R1',
+            'purchase_price' => 200000, 'kwh_bought' => 125.86, 'price_per_unit' => 1589.07,
+            'created_at' => $at, 'updated_at' => $at,
+        ]);
+        $this->check($at, estimated: true);
 
         Livewire::test(KwhConfirmationModal::class)
             ->assertSet('showModal', true);
+    }
+
+    public function test_modal_does_not_ask_again_after_the_prediction_is_confirmed(): void
+    {
+        // Dulu: klik "Ya" menyimpan estimasi, dan estimasi itu membuat modal
+        // muncul lagi di setiap kunjungan berikutnya.
+        $this->check(now()->subDays(5)->toDateTimeString());
+
+        Livewire::test(KwhConfirmationModal::class)->call('confirmYes');
+
+        Livewire::test(KwhConfirmationModal::class)
+            ->assertSet('showModal', false);
     }
 
     public function test_modal_stays_hidden_when_there_is_no_data_at_all(): void

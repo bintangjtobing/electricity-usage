@@ -183,25 +183,37 @@ class ElectricityDashboard extends Component
         $purchaseData = [];
         $dailyUsageData = [];
 
+        // Pemakaian harian hanya diukur antar bacaan meteran nyata; titik
+        // estimasi dan selang < 1 jam (pasangan sebelum/sesudah top-up) diberi
+        // null -- dulu tampil 0 dan grafik seolah anjlok di setiap pembelian.
+        $prevMeasured = null;
+
         foreach ($checks as $index => $check) {
             $labels[] = Carbon::parse($check->created_at)->format('d M');
             $kwhData[] = (float) $check->kwh_remaining;
 
             if ($index === 0) {
                 $purchaseData[] = null;
-                $dailyUsageData[] = 0;
+            } else {
+                $bought = UsageCalculator::kwhBoughtBetween($checks[$index - 1]->created_at, $check->created_at);
+                $purchaseData[] = $bought > 0 ? $bought : null;
+            }
+
+            if ($check->is_estimated) {
+                $dailyUsageData[] = null;
                 continue;
             }
 
-            $prev = $checks[$index - 1];
+            $daily = null;
 
-            $bought = UsageCalculator::kwhBoughtBetween($prev->created_at, $check->created_at);
-            $purchaseData[] = $bought > 0 ? $bought : null;
+            if ($prevMeasured) {
+                $usage = UsageCalculator::usageBetween($prevMeasured, $check);
+                $days = Carbon::parse($prevMeasured->created_at)->diffInHours(Carbon::parse($check->created_at)) / 24;
+                $daily = $days > 0 ? max(0, round($usage / $days, 2)) : null;
+            }
 
-            $usage = UsageCalculator::usageBetween($prev, $check);
-            $days = Carbon::parse($prev->created_at)->diffInHours(Carbon::parse($check->created_at)) / 24;
-
-            $dailyUsageData[] = $days > 0 ? max(0, round($usage / $days, 2)) : 0;
+            $dailyUsageData[] = $daily;
+            $prevMeasured = $check;
         }
 
         $this->chartData = [
