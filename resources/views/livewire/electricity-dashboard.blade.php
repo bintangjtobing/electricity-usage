@@ -15,7 +15,7 @@
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-white">Dashboard Monitoring Listrik</h1>
-                <p class="text-gray-400 mt-2">Monitor penggunaan listrik Anda secara real-time</p>
+                <p class="text-gray-400 mt-2">Pantau pemakaian listrik secara real-time</p>
             </div>
             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                 <a href="{{ route('purchase') }}"
@@ -64,7 +64,7 @@
                     <div class="flex-1">
                         <h3 class="text-lg font-semibold text-white mb-2">Hai Bintang! 👋</h3>
                         <p class="text-gray-300 leading-relaxed">
-                            Saya adalah assistant pribadi untuk mengecek semua penggunaan listrik token di
+                            Saya asisten pribadimu untuk memantau pemakaian listrik token di
                             <span class="font-semibold">{{ $locationLabel }}</span> saat ini.
                             Saya melihat bahwa kamu membeli token terakhir kali tanggal <span class="font-semibold">{{
                                 $lastPurchase->created_at->format('d/m/Y') }}</span>,
@@ -91,7 +91,7 @@
                             Dengan sisa sekitar <span class="font-semibold">{{ number_format($estimatedRemainingKwh, 2) }} kWh</span> saat ini, listrikmu diperkirakan cukup untuk
                             @if($dailyAverage > 0)
                                 sekitar <span class="font-semibold">{{ $daysUntilEmpty }} hari lagi</span>
-                                (kira-kira sampai <span class="font-semibold">{{ optional($estimatedEmptyDate)->translatedFormat('d M Y') }}</span>).
+                                (kira-kira sampai <span class="font-semibold">{{ optional($estimatedEmptyDate)->locale('id')->translatedFormat('j F Y') }}</span>).
                             @else
                                 beberapa waktu ke depan (belum cukup data untuk estimasi harian).
                             @endif
@@ -112,13 +112,19 @@
             </div>
         </div>
 
+        {{-- Kalender mingguan: komponen Riwayat dalam mode week (badge, popover,
+             edit/hapus sama persis dengan halaman Riwayat) --}}
+        <div class="mb-8">
+            <livewire:electricity-history mode="week" />
+        </div>
+
         <!-- Usage Chart -->
         <div class="mb-8">
             <div class="bg-gray-800 rounded-xl shadow-2xl p-4 sm:p-8 border border-gray-700">
                 <div class="flex items-start justify-between gap-3 mb-4 sm:mb-6">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-bold text-white">Grafik Penggunaan Listrik</h2>
-                        <p class="text-sm sm:text-base text-gray-400 mt-1">Tracking sisa kWh dan pembelian token</p>
+                        <p class="text-sm sm:text-base text-gray-400 mt-1">Memantau sisa kWh dan pembelian token</p>
                     </div>
                     <div class="text-right">
                         <div class="inline-block px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg {{ $usageIndicatorColor }}">

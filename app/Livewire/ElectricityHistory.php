@@ -8,12 +8,20 @@ use App\Models\Setting;
 use App\Support\DecimalInput;
 use App\Support\UsageCalendar;
 use Carbon\Carbon;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class ElectricityHistory extends Component
 {
+    /** 'month' (halaman Riwayat) atau 'week' (kalender di dashboard). */
+    #[Locked]
+    public $mode = 'month';
+
     /** Bulan yang ditampilkan di kalender, format Y-m. */
     public $month;
+
+    /** Hari Minggu awal minggu yang ditampilkan (mode week), format Y-m-d. */
+    public $weekStart;
 
     /** Data yang sedang diedit; null bila tidak ada. */
     public $editingType = null;
@@ -27,26 +35,37 @@ class ElectricityHistory extends Component
     public $confirmingDeleteType = null;
     public $confirmingDeleteId = null;
 
-    public function mount()
+    public function mount($mode = 'month')
     {
+        $this->mode = $mode === 'week' ? 'week' : 'month';
         $this->month = now()->format('Y-m');
+        $this->weekStart = now()->startOfWeek(Carbon::SUNDAY)->format('Y-m-d');
     }
 
-    public function previousMonth()
+    public function previousPeriod()
     {
-        $this->month = $this->currentMonth()->subMonthNoOverflow()->format('Y-m');
+        if ($this->mode === 'week') {
+            $this->weekStart = $this->currentWeek()->subWeek()->format('Y-m-d');
+        } else {
+            $this->month = $this->currentMonth()->subMonthNoOverflow()->format('Y-m');
+        }
         $this->cancelEdit();
     }
 
-    public function nextMonth()
+    public function nextPeriod()
     {
-        $this->month = $this->currentMonth()->addMonthNoOverflow()->format('Y-m');
+        if ($this->mode === 'week') {
+            $this->weekStart = $this->currentWeek()->addWeek()->format('Y-m-d');
+        } else {
+            $this->month = $this->currentMonth()->addMonthNoOverflow()->format('Y-m');
+        }
         $this->cancelEdit();
     }
 
     public function goToToday()
     {
         $this->month = now()->format('Y-m');
+        $this->weekStart = now()->startOfWeek(Carbon::SUNDAY)->format('Y-m-d');
         $this->cancelEdit();
     }
 
@@ -175,12 +194,24 @@ class ElectricityHistory extends Component
         return Carbon::createFromFormat('Y-m-d', $this->month . '-01')->startOfDay();
     }
 
+    private function currentWeek(): Carbon
+    {
+        if (! is_string($this->weekStart) || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->weekStart)
+            || ! checkdate((int) substr($this->weekStart, 5, 2), (int) substr($this->weekStart, 8, 2), (int) substr($this->weekStart, 0, 4))) {
+            $this->weekStart = now()->startOfWeek(Carbon::SUNDAY)->format('Y-m-d');
+        }
+
+        return Carbon::createFromFormat('Y-m-d', $this->weekStart)->startOfWeek(Carbon::SUNDAY)->startOfDay();
+    }
+
     public function render()
     {
         $setting = Setting::current();
 
         return view('livewire.electricity-history', [
-            'calendar' => UsageCalendar::month($this->currentMonth()),
+            'calendar' => $this->mode === 'week'
+                ? UsageCalendar::week($this->currentWeek())
+                : UsageCalendar::month($this->currentMonth()),
             'weekdays' => UsageCalendar::WEEKDAYS,
             'thresholdHemat' => (float) $setting->threshold_hemat,
             'thresholdBoros' => (float) $setting->threshold_boros,

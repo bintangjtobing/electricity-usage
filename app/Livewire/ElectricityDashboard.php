@@ -152,8 +152,9 @@ class ElectricityDashboard extends Component
 
         $this->projectionToPayday = [
             'paydayDay' => $payday,
-            'targetMonth' => $targetDate->translatedFormat('F'),
-            'targetDate' => $targetDate->translatedFormat('d F Y'),
+            // Nama bulan dalam bahasa Indonesia ("Oktober", bukan "October").
+            'targetMonth' => $targetDate->copy()->locale('id')->translatedFormat('F'),
+            'targetDate' => $targetDate->copy()->locale('id')->translatedFormat('j F Y'),
             'daysUntilPayday' => $daysUntilPayday,
             'projectedUsage' => round($projectedUsage, 2),
             'remainingKwh' => round($remainingOnPayday, 2),
@@ -165,8 +166,8 @@ class ElectricityDashboard extends Component
     {
         return [
             'paydayDay' => $setting->payday_day,
-            'targetMonth' => now()->translatedFormat('F'),
-            'targetDate' => now()->translatedFormat('d F Y'),
+            'targetMonth' => now()->locale('id')->translatedFormat('F'),
+            'targetDate' => now()->locale('id')->translatedFormat('j F Y'),
             'daysUntilPayday' => 0,
             'projectedUsage' => 0,
             'remainingKwh' => 0,
@@ -189,7 +190,7 @@ class ElectricityDashboard extends Component
         $prevMeasured = null;
 
         foreach ($checks as $index => $check) {
-            $labels[] = Carbon::parse($check->created_at)->format('d M');
+            $labels[] = Carbon::parse($check->created_at)->locale('id')->translatedFormat('d M');
             $kwhData[] = (float) $check->kwh_remaining;
 
             if ($index === 0) {

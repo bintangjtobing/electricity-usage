@@ -71,14 +71,53 @@ class HistoryCalendarTest extends TestCase
     public function test_month_navigation(): void
     {
         Livewire::test(ElectricityHistory::class)
-            ->call('previousMonth')
+            ->call('previousPeriod')
             ->assertSet('month', '2026-09')
             ->assertSee('September 2026')
-            ->call('nextMonth')
-            ->call('nextMonth')
+            ->call('nextPeriod')
+            ->call('nextPeriod')
             ->assertSet('month', '2026-11')
             ->call('goToToday')
             ->assertSet('month', '2026-10');
+    }
+
+    public function test_week_mode_shows_one_week_and_navigates_by_week(): void
+    {
+        $this->check('2026-10-01 11:59:59', 10);
+        $this->purchase('2026-10-01 12:00:00');
+
+        $component = Livewire::test(ElectricityHistory::class, ['mode' => 'week'])
+            ->assertSet('weekStart', '2026-10-04')
+            ->assertSee('Kalender Minggu Ini')
+            ->assertSee('4–10 Oktober 2026')
+            ->assertDontSee('Beli 500rb');
+
+        $component->call('previousPeriod')
+            ->assertSet('weekStart', '2026-09-27')
+            ->assertSee('27 Sep – 3 Okt 2026')
+            ->assertSee('500rb')
+            ->call('goToToday')
+            ->assertSet('weekStart', '2026-10-04');
+
+        $this->assertSame(1, count($component->viewData('calendar')['weeks']));
+    }
+
+    public function test_week_mode_cannot_be_switched_from_the_browser(): void
+    {
+        $this->expectException(\Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException::class);
+
+        Livewire::test(ElectricityHistory::class, ['mode' => 'week'])->set('mode', 'month');
+    }
+
+    public function test_dashboard_embeds_the_weekly_calendar(): void
+    {
+        $this->check('2026-10-01 11:59:59', 10);
+        $this->purchase('2026-10-01 12:00:00');
+        $this->check('2026-10-01 12:00:01', 324.65);
+
+        Livewire::test(ElectricityDashboard::class)
+            ->assertSeeLivewire(ElectricityHistory::class)
+            ->assertSee('Oktober');
     }
 
     public function test_tampered_month_falls_back_to_today(): void

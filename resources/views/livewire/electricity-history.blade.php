@@ -41,7 +41,7 @@
 {{-- Popover ala Google Calendar: konten tiap badge sudah dirender di server,
      Alpine cukup memilih mana yang tampil dan menaruhnya di samping badge.
      Edit/Hapus tetap lewat Livewire. --}}
-<div class="container mx-auto px-4 py-8 relative"
+<div class="{{ $mode === 'week' ? 'relative' : 'container mx-auto px-4 py-8 relative' }}"
      x-data="{
         open: null,
         style: '',
@@ -77,7 +77,15 @@
      x-on:keydown.escape.window="close()"
      x-on:history-updated.window="open = null">
 
-    <h1 class="text-3xl font-bold text-white mb-6">Riwayat Data Listrik</h1>
+    @if ($mode === 'week')
+        {{-- Mode mingguan: tertanam di dashboard, judulnya ikut gaya kartu dashboard --}}
+        <div class="flex items-center justify-between gap-3 mb-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-white">Kalender Minggu Ini</h2>
+            <a href="{{ route('history') }}" class="text-sm text-blue-400 hover:text-blue-300 whitespace-nowrap">Riwayat lengkap &rarr;</a>
+        </div>
+    @else
+        <h1 class="text-3xl font-bold text-white mb-6">Riwayat Data Listrik</h1>
+    @endif
 
     @if (session()->has('message'))
         <div class="mb-6 bg-green-900 border-l-4 border-green-500 p-4 rounded-lg">
@@ -89,17 +97,17 @@
     <div class="flex flex-wrap items-center gap-x-3 gap-y-2 mb-4">
         <button type="button" wire:click="goToToday" x-on:click="open = null"
                 class="px-4 py-2 rounded-full border border-gray-600 text-sm font-medium text-gray-200 hover:bg-gray-800 transition-colors">
-            Hari ini
+            {{ $mode === 'week' ? 'Minggu ini' : 'Hari ini' }}
         </button>
         <div class="flex items-center">
-            <button type="button" wire:click="previousMonth" x-on:click="open = null" aria-label="Bulan sebelumnya" class="{{ $iconButton }}">
+            <button type="button" wire:click="previousPeriod" x-on:click="open = null" aria-label="{{ $mode === 'week' ? 'Minggu sebelumnya' : 'Bulan sebelumnya' }}" class="{{ $iconButton }}">
                 {!! $icon('M15.75 19.5L8.25 12l7.5-7.5') !!}
             </button>
-            <button type="button" wire:click="nextMonth" x-on:click="open = null" aria-label="Bulan berikutnya" class="{{ $iconButton }}">
+            <button type="button" wire:click="nextPeriod" x-on:click="open = null" aria-label="{{ $mode === 'week' ? 'Minggu berikutnya' : 'Bulan berikutnya' }}" class="{{ $iconButton }}">
                 {!! $icon('M8.25 4.5l7.5 7.5-7.5 7.5') !!}
             </button>
         </div>
-        <h2 class="text-xl sm:text-2xl font-semibold text-white">{{ $calendar['label'] }}</h2>
+        <p class="{{ $mode === 'week' ? 'text-base sm:text-lg' : 'text-xl sm:text-2xl' }} font-semibold text-white">{{ $calendar['label'] }}</p>
         <span wire:loading class="text-xs text-gray-500">memuat&hellip;</span>
 
         <div class="w-full lg:w-auto lg:ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
@@ -113,6 +121,36 @@
         </div>
     </div>
 
+    @if ($mode === 'week')
+    {{-- Ringkasan minggu: ringkas, karena dashboard sudah punya kartu statistik sendiri --}}
+    <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-3">
+        <div class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
+            <p class="text-[11px] sm:text-xs uppercase tracking-wide text-gray-400">Beli</p>
+            <p class="text-sm sm:text-base font-semibold text-white">Rp {{ number_format($totals['purchasePrice'], 0, ',', '.') }}</p>
+            <p class="text-[11px] sm:text-xs text-gray-400">{{ number_format($totals['purchaseKwh'], 2) }} kWh</p>
+        </div>
+        <div class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
+            <p class="text-[11px] sm:text-xs uppercase tracking-wide text-gray-400">Terpakai</p>
+            @if ($totals['dailyAverage'] !== null)
+                <p class="text-sm sm:text-base font-semibold text-white">{{ number_format($totals['usage'], 2) }} kWh</p>
+                <p class="text-[11px] sm:text-xs {{ $toneText[$tone($totals['dailyAverage'])] }}">{{ number_format($totals['dailyAverage'], 2) }} kWh/hari</p>
+            @else
+                <p class="text-sm sm:text-base font-semibold text-gray-500">&ndash;</p>
+                <p class="text-[11px] sm:text-xs text-gray-500">belum ada data</p>
+            @endif
+        </div>
+        <div class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
+            <p class="text-[11px] sm:text-xs uppercase tracking-wide text-gray-400">Sisa terakhir</p>
+            @if ($totals['lastCheck'])
+                <p class="text-sm sm:text-base font-semibold text-white">{{ $totals['lastCheck']->is_estimated ? '~' : '' }}{{ number_format($totals['lastCheck']->kwh_remaining, 2) }} kWh</p>
+                <p class="text-[11px] sm:text-xs text-gray-400">{{ $totals['lastCheck']->created_at->copy()->locale('id')->translatedFormat('j M, H:i') }}</p>
+            @else
+                <p class="text-sm sm:text-base font-semibold text-gray-500">&ndash;</p>
+                <p class="text-[11px] sm:text-xs text-gray-500">tidak ada pengecekan</p>
+            @endif
+        </div>
+    </div>
+    @else
     {{-- Ringkasan bulan --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
@@ -132,7 +170,7 @@
                     <span class="{{ $toneText[$tone($totals['dailyAverage'])] }}">{{ number_format($totals['dailyAverage'], 2) }} kWh/hari</span>
                     &middot; {{ number_format($totals['coveredDays'], 1) }} hari tercatat
                 @else
-                    Belum ada bacaan meteran
+                    Belum ada pengecekan meteran
                 @endif
             </p>
         </div>
@@ -154,6 +192,7 @@
             @endif
         </div>
     </div>
+    @endif
 
     {{-- Kalender --}}
     <div class="bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
@@ -231,8 +270,8 @@
     </div>
 
     <p class="mt-3 text-xs text-gray-500">
-        Total = perkiraan kWh terpakai per tanggal: pemakaian di antara dua bacaan meteran dibagi rata per jam.
-        Miring = hari yang baru tercatat sebagian. <span class="hidden sm:inline">Klik badge</span><span class="sm:hidden">Ketuk tanggal</span> untuk detail, edit, atau hapus.
+        Total = perkiraan kWh terpakai per tanggal: pemakaian di antara dua pengecekan meteran dibagi rata per jam.
+        Huruf miring = tanggal yang datanya baru sebagian. <span class="hidden sm:inline">Klik label</span><span class="sm:hidden">Ketuk tanggal</span> untuk melihat detail, mengubah, atau menghapus.
     </p>
 
     {{-- Latar gelap untuk bottom sheet di HP --}}
@@ -341,7 +380,7 @@
                                         <div class="mt-3 p-3 rounded-lg bg-red-950/50 border border-red-900">
                                             <p class="text-sm text-red-200">Hapus pembelian ini?</p>
                                             @if ($near->isNotEmpty())
-                                                <p class="mt-1 text-xs text-red-300/80">Titik sisa sebelum/sesudah top-up tidak ikut terhapus; hapus lewat badge Sisa kalau perlu.</p>
+                                                <p class="mt-1 text-xs text-red-300/80">Catatan sisa sebelum/sesudah top-up tidak ikut terhapus. Hapus lewat label Sisa jika perlu.</p>
                                             @endif
                                             <div class="mt-2 flex justify-end gap-2">
                                                 <button type="button" wire:click="cancelDelete" class="px-3 py-1.5 text-sm rounded-full text-gray-300 hover:bg-gray-700">Batal</button>
@@ -453,7 +492,7 @@
                                         <p class="text-xs text-gray-400">
                                             {{-- Rentang jam, bukan "X jam": "12.1 jam" sempat terbaca "12 jam yang lalu". --}}
                                             Tercatat pukul {{ $day['coveredFrom']->format('H:i') }}&ndash;{{ $day['coveredUntil']->isSameDay($day['date']) ? $day['coveredUntil']->format('H:i') : '24:00' }}
-                                            ({{ number_format($coveredHours, 1) }} jam){{ $day['isToday'] ? ', s.d. bacaan terakhir' : '' }} &middot; laju
+                                            ({{ number_format($coveredHours, 1) }} jam){{ $day['isToday'] ? ', sampai pengecekan terakhir' : '' }} &middot; setara
                                             <span class="{{ $toneText[$dayTone] }}">{{ number_format($day['rate'], 2) }} kWh/hari ({{ $toneLabel[$dayTone] }})</span>
                                         </p>
                                     @else
@@ -466,7 +505,7 @@
                                 <div class="flex items-start gap-3">
                                     <span class="text-gray-400">{!! $icon($paths['gauge']) !!}</span>
                                     <div class="space-y-2">
-                                        <p class="text-xs text-gray-400">Dihitung dari bacaan meteran:</p>
+                                        <p class="text-xs text-gray-400">Dihitung dari pengecekan meteran:</p>
                                         @foreach ($day['intervals'] as $interval)
                                             @php $days = $interval['seconds'] / 86400; @endphp
                                             <div>
@@ -480,7 +519,7 @@
 
                             <div class="flex items-start gap-3 text-xs text-gray-400">
                                 <span>{!! $icon($paths['info'], 'w-4 h-4') !!}</span>
-                                <p>Pemakaian di antara dua bacaan meteran dibagi rata per jam lalu dijumlah per tanggal. Catatan estimasi dilewati.</p>
+                                <p>Pemakaian di antara dua pengecekan meteran dibagi rata per jam, lalu dijumlahkan per tanggal. Data estimasi tidak ikut dihitung.</p>
                             </div>
                         </div>
                     </div>

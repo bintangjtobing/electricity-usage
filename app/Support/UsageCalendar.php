@@ -25,10 +25,34 @@ class UsageCalendar
     public static function month(Carbon $month): array
     {
         $monthStart = $month->copy()->startOfMonth();
-        $monthEnd = $month->copy()->endOfMonth();
-        $gridStart = $monthStart->copy()->startOfWeek(Carbon::SUNDAY);
-        $gridEnd = $monthEnd->copy()->endOfWeek(Carbon::SATURDAY);
 
+        return self::build(
+            $monthStart->copy()->startOfWeek(Carbon::SUNDAY),
+            $month->copy()->endOfMonth()->endOfWeek(Carbon::SATURDAY),
+            fn (Carbon $date) => $date->month === $monthStart->month,
+            $monthStart->copy()->locale('id')->translatedFormat('F Y'),
+        );
+    }
+
+    /** Satu minggu (Minggu-Sabtu) yang memuat $date, untuk kalender di dashboard. */
+    public static function week(Carbon $date): array
+    {
+        $start = $date->copy()->startOfWeek(Carbon::SUNDAY);
+        $end = $date->copy()->endOfWeek(Carbon::SATURDAY);
+
+        $label = $start->month === $end->month
+            ? $start->day . '–' . $end->copy()->locale('id')->translatedFormat('j F Y')
+            : $start->copy()->locale('id')->translatedFormat($start->year === $end->year ? 'j M' : 'j M Y')
+                . ' – ' . $end->copy()->locale('id')->translatedFormat('j M Y');
+
+        return self::build($start, $end, fn () => true, $label);
+    }
+
+    /**
+     * @param  callable(Carbon): bool  $inRange  tanggal yang dihitung di ringkasan
+     */
+    private static function build(Carbon $gridStart, Carbon $gridEnd, callable $inRange, string $label): array
+    {
         $purchases = ElectricityPurchase::whereBetween('created_at', [$gridStart, $gridEnd])
             ->orderBy('created_at')->get();
         $checks = ElectricityUsageCheck::whereBetween('created_at', [$gridStart, $gridEnd])
@@ -46,7 +70,7 @@ class UsageCalendar
 
         for ($date = $gridStart->copy(); $date->lte($gridEnd); $date->addDay()) {
             $key = $date->format('Y-m-d');
-            $inMonth = $date->month === $monthStart->month;
+            $inMonth = $inRange($date);
 
             $dayPurchases = $purchases->filter(fn ($p) => $p->created_at->format('Y-m-d') === $key)->values();
             $dayChecks = $checks->filter(fn ($c) => $c->created_at->format('Y-m-d') === $key)->values();
@@ -91,7 +115,7 @@ class UsageCalendar
         $totals['dailyAverage'] = $coveredDays > 0 ? round($totals['usage'] / $coveredDays, 2) : null;
 
         return [
-            'label' => $monthStart->copy()->locale('id')->translatedFormat('F Y'),
+            'label' => $label,
             'weeks' => $weeks,
             'totals' => $totals,
             'roles' => $roles,
