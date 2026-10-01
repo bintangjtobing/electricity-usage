@@ -126,14 +126,15 @@
                         <span class="text-gray-500 font-normal">(opsional)</span>
                     </label>
                     <div class="relative md:w-1/2">
-                        <input type="number"
+                        {{-- type="text", bukan "number": di HP berlokal Indonesia koma
+                             membuat input number kosong. Dinormalisasi di server. --}}
+                        <input type="text"
                                id="kwh_before_purchase"
                                wire:model="kwh_before_purchase"
-                               step="0.01"
-                               min="0"
                                inputmode="decimal"
+                               autocomplete="off"
                                class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('kwh_before_purchase') border-red-500 @enderror"
-                               placeholder="mis. 12.40">
+                               placeholder="mis. 12,40 atau 12.40">
                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <span class="text-gray-400 sm:text-sm">kWh</span>
                         </div>

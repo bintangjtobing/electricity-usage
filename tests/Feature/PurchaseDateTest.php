@@ -156,6 +156,46 @@ class PurchaseDateTest extends TestCase
         $this->assertTrue($check->is_estimated);
     }
 
+    public function test_reading_before_topup_accepts_comma_or_dot_as_decimal(): void
+    {
+        // Keyboard HP berlokal Indonesia mengetik koma; meteran PLN memakai titik.
+        foreach (['7,24' => 7.24, '7.24' => 7.24, ' 1.234,5 ' => 1234.5] as $input => $expected) {
+            Livewire::test(ElectricityPurchaseForm::class)
+                ->set('kwh_bought', 100)
+                ->set('kwh_before_purchase', $input)
+                ->call('submit')
+                ->assertHasNoErrors();
+
+            $purchase = ElectricityPurchase::latest('id')->first();
+            $this->assertSame($expected, round($purchase->kwh_before_purchase, 2), "input: {$input}");
+        }
+    }
+
+    public function test_cleared_reading_is_stored_as_null_not_empty_string(): void
+    {
+        // Field yang diisi lalu dihapus terkirim sebagai '' -- MySQL strict menolak
+        // '' untuk kolom decimal (500 di produksi 2026-10-01).
+        Livewire::test(ElectricityPurchaseForm::class)
+            ->set('kwh_bought', 100)
+            ->set('kwh_before_purchase', '')
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $this->assertNull(ElectricityPurchase::first()->getRawOriginal('kwh_before_purchase'));
+        $this->assertTrue(ElectricityUsageCheck::first()->is_estimated);
+    }
+
+    public function test_non_numeric_reading_is_rejected(): void
+    {
+        Livewire::test(ElectricityPurchaseForm::class)
+            ->set('kwh_bought', 100)
+            ->set('kwh_before_purchase', '7,2,4')
+            ->call('submit')
+            ->assertHasErrors('kwh_before_purchase');
+
+        $this->assertSame(0, ElectricityPurchase::count());
+    }
+
     public function test_quick_amount_button_fills_price_and_kwh(): void
     {
         Livewire::test(ElectricityPurchaseForm::class)

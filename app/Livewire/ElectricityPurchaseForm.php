@@ -37,6 +37,7 @@ class ElectricityPurchaseForm extends Component
     protected $messages = [
         'purchase_date.before_or_equal' => 'Tanggal pembelian tidak boleh di masa depan.',
         'kwh_before_purchase.min' => 'Sisa kWh tidak boleh negatif.',
+        'kwh_before_purchase.numeric' => 'Sisa kWh harus berupa angka, mis. 12,40 atau 12.40.',
     ];
 
     public function mount()
@@ -82,6 +83,8 @@ class ElectricityPurchaseForm extends Component
 
     public function submit()
     {
+        $this->kwh_before_purchase = $this->normalizeDecimal($this->kwh_before_purchase);
+
         $this->validate();
 
         // Tanggal pembelian jadi created_at, karena seluruh dashboard & grafik
@@ -106,7 +109,7 @@ class ElectricityPurchaseForm extends Component
         // Kalau tidak, kita terpaksa mundur ke catatan terakhir sebelum tanggal
         // ini -- pemakaian di antaranya tidak diketahui, jadi hasilnya ditandai
         // sebagai estimasi.
-        $isEstimated = $this->kwh_before_purchase === null || $this->kwh_before_purchase === '';
+        $isEstimated = $this->kwh_before_purchase === null;
 
         if ($isEstimated) {
             // Sisa sebelum top-up tak diketahui: cukup satu titik (sesudah top-up),
@@ -135,6 +138,31 @@ class ElectricityPurchaseForm extends Component
         $this->purchase_date = now()->format('Y-m-d');
 
         $this->dispatch('refresh-dashboard');
+    }
+
+    /**
+     * Input teks bebas -> string angka bertitik, atau null kalau kosong.
+     *
+     * Input sengaja bukan type="number": keyboard HP berlokal Indonesia mengetik
+     * koma, dan browser lalu mengirim '' (yang ditolak MySQL strict untuk kolom
+     * decimal). Koma maupun titik diterima; kalau keduanya ada, yang terakhir
+     * dianggap desimal ("1.234,5" -> "1234.5"). Teks bukan angka dibiarkan
+     * supaya ditolak validasi numeric.
+     */
+    private function normalizeDecimal($value): ?string
+    {
+        $value = str_replace(' ', '', (string) $value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (str_contains($value, ',') && str_contains($value, '.')) {
+            $thousands = strrpos($value, ',') > strrpos($value, '.') ? '.' : ',';
+            $value = str_replace($thousands, '', $value);
+        }
+
+        return str_replace(',', '.', $value);
     }
 
     /** Simpan satu titik pembacaan meteran pada waktu tertentu. */
