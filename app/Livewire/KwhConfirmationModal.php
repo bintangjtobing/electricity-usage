@@ -37,11 +37,10 @@ class KwhConfirmationModal extends Component
         $this->lastKwhValue = $lastCheck->kwh_remaining;
         $this->meterNumber = $lastCheck->meter_number;
         $this->hoursSinceLastCheck = Carbon::parse($lastCheck->created_at)->diffInHours(now());
-        $this->dailyAverage = $this->calculateDailyAverage();
+        $this->dailyAverage = UsageCalculator::dailyAverage();
+        $this->predictedKwhValue = UsageCalculator::estimatedRemaining($lastCheck, $this->dailyAverage);
 
         $daysSinceLastCheck = $this->hoursSinceLastCheck / 24;
-        $estimatedUsage = $this->dailyAverage * $daysSinceLastCheck;
-        $this->predictedKwhValue = max(0, round($this->lastKwhValue - $estimatedUsage, 2));
 
         // Dulu modal ini muncul di setiap kunjungan, bahkan ketika meteran baru
         // saja dicek -- tidak ada gunanya bertanya dan justru mengganggu.
@@ -107,11 +106,6 @@ class KwhConfirmationModal extends Component
         $this->showModal = false;
         $this->showInputField = false;
         $this->newKwhValue = '';
-    }
-
-    private function calculateDailyAverage()
-    {
-        return UsageCalculator::dailyAverage();
     }
 
     public function render()

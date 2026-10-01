@@ -104,4 +104,53 @@ class UsageCalculatorTest extends TestCase
         $this->assertSame(1.0, $stats['totalDays']);
         $this->assertSame(10.0, $stats['dailyAverage']);
     }
+
+    public function test_daily_average_only_uses_the_recent_window(): void
+    {
+        // Riwayat lama yang hemat (5 kWh/hari) tidak boleh menyeret rata-rata
+        // untuk proyeksi; pola sekarang 20 kWh/hari. Di produksi, data
+        // April-Juli membuat rata-rata 14,94 padahal sejak Agustus ~17.
+        $this->check('2026-05-01 00:00:00', 500);
+        $this->check('2026-07-10 00:00:00', 150);
+        $this->purchase('2026-07-20 00:00:00', 560);
+        $this->check('2026-08-01 00:00:00', 600);
+        $this->check('2026-08-31 00:00:00', 0);
+
+        $this->assertSame(20.0, UsageCalculator::dailyAverage());
+        // Statistik sepanjang riwayat tetap tersedia untuk total terpakai.
+        $this->assertSame(1060.0, UsageCalculator::stats()['totalUsage']);
+    }
+
+    public function test_recent_window_starts_at_the_reading_before_the_cutoff(): void
+    {
+        // Batas jendela (30 hari sebelum pembacaan terakhir) jatuh di tengah
+        // selang 1-21 Agustus; selang itu dihitung utuh, bukan dibuang.
+        $this->check('2026-07-01 00:00:00', 900);
+        $this->check('2026-08-01 00:00:00', 400);
+        $this->check('2026-08-21 00:00:00', 200);
+        $this->check('2026-09-10 00:00:00', 0);
+
+        // (400 - 0) / 40 hari.
+        $this->assertSame(10.0, UsageCalculator::dailyAverage());
+    }
+
+    public function test_daily_average_uses_all_history_when_shorter_than_the_window(): void
+    {
+        $this->check('2026-09-01 00:00:00', 100);
+        $this->check('2026-09-11 00:00:00', 40);
+
+        $this->assertSame(6.0, UsageCalculator::dailyAverage());
+    }
+
+    public function test_estimated_remaining_subtracts_usage_since_last_reading(): void
+    {
+        $this->travelTo('2026-10-01 12:00:00');
+        $this->check('2026-09-28 12:00:00', 100);
+
+        $last = ElectricityUsageCheck::first();
+
+        $this->assertSame(55.0, UsageCalculator::estimatedRemaining($last, 15.0));
+        // Tidak pernah negatif: meteran berhenti di nol.
+        $this->assertSame(0.0, UsageCalculator::estimatedRemaining($last, 50.0));
+    }
 }

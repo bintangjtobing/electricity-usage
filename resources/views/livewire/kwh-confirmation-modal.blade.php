@@ -29,7 +29,7 @@
                         <p class="mb-1">📊 <strong>Estimasi berdasarkan:</strong></p>
                         <ul class="ml-4 space-y-1">
                             <li>• Sisa terakhir: {{ number_format($lastKwhValue, 2) }} kWh</li>
-                            <li>• Penggunaan rata-rata: {{ number_format($dailyAverage, 2) }} kWh/hari</li>
+                            <li>• Penggunaan rata-rata: {{ number_format($dailyAverage, 2) }} kWh/hari ({{ \App\Support\UsageCalculator::RECENT_WINDOW_DAYS }} hari terakhir)</li>
                             <li>• Estimasi penggunaan: {{ number_format($dailyAverage * ($hoursSinceLastCheck / 24), 2) }} kWh ({{ $hoursSinceLastCheck }} jam)</li>
                         </ul>
                     </div>

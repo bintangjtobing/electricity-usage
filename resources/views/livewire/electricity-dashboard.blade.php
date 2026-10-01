@@ -80,7 +80,7 @@
                             Rata-rata pemakaian harian kamu sekitar <span
                                 class="font-semibold {{ $usageColor }}">{{ number_format($dailyAverage, 2) }} kWh/hari</span>,
                             yang berarti ini tergolong <span class="font-semibold {{ $usageColor }}">{{ $usageLabel }}</span>.
-                            Angka ini rata-rata sepanjang riwayat pemakaianmu (total kWh terpakai dibagi total hari), jadi cukup akurat sebagai gambaran umum.
+                            Angka ini dihitung dari {{ \App\Support\UsageCalculator::RECENT_WINDOW_DAYS }} hari terakhir (kWh terpakai dibagi jumlah hari), supaya perkiraan di bawah mengikuti pola pemakaianmu sekarang.
                         </p>
                         <p class="text-gray-300 leading-relaxed mt-3">
                             Kalau pola ini bertahan, perkiraan pemakaian dalam <span class="font-semibold">sebulan (30 hari)</span> sekitar
@@ -88,7 +88,7 @@
                             atau setara sekitar <span class="font-semibold text-green-400">Rp {{ number_format($monthlyCost, 0, ',', '.') }}</span>.
                         </p>
                         <p class="text-gray-300 leading-relaxed mt-3">
-                            Dengan sisa <span class="font-semibold">{{ number_format($remainingKwh, 2) }} kWh</span>, listrikmu diperkirakan cukup untuk
+                            Dengan sisa sekitar <span class="font-semibold">{{ number_format($estimatedRemainingKwh, 2) }} kWh</span> saat ini, listrikmu diperkirakan cukup untuk
                             @if($dailyAverage > 0)
                                 sekitar <span class="font-semibold">{{ $daysUntilEmpty }} hari lagi</span>
                                 (kira-kira sampai <span class="font-semibold">{{ optional($estimatedEmptyDate)->translatedFormat('d M Y') }}</span>).
@@ -357,7 +357,7 @@
                     <div>
                         <h3 class="text-lg font-semibold text-gray-300 mb-2">Penggunaan Rata-rata</h3>
                         <p class="text-3xl font-bold text-white">{{ number_format($dailyAverage, 2) }}</p>
-                        <p class="text-sm text-gray-400 mt-1">kWh/hari</p>
+                        <p class="text-sm text-gray-400 mt-1">kWh/hari &middot; {{ \App\Support\UsageCalculator::RECENT_WINDOW_DAYS }} hari terakhir</p>
                     </div>
                     <div class="p-3 bg-yellow-100 rounded-full">
                         <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -414,8 +414,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-300 mb-2">Sisa Hari (Estimasi)</h3>
-                        <p class="text-3xl font-bold text-white">{{ $dailyAverage > 0 ? round($remainingKwh /
-                            $dailyAverage, 0) : 0 }}</p>
+                        <p class="text-3xl font-bold text-white">{{ $daysUntilEmpty ?? 0 }}</p>
                         <p class="text-sm text-gray-400 mt-1">hari lagi</p>
                     </div>
                     <div class="p-3 bg-indigo-100 rounded-full">
@@ -459,7 +458,7 @@
                                 '.') }}</span>
                         </div>
                         <p class="text-xs text-gray-400 mt-1">{{ number_format($monthlyProjection, 2) }} kWh × Rp {{
-                            number_format($lastPurchase->price_per_unit, 0, ',', '.') }}/kWh</p>
+                            number_format($pricePerUnit, 0, ',', '.') }}/kWh</p>
                     </div>
                     <div class="p-4 bg-gray-700 rounded-lg">
                         <div class="flex justify-between items-center mb-1">
@@ -495,10 +494,10 @@
                     <div class="p-4 bg-gray-700 rounded-lg">
                         <div class="flex justify-between items-center mb-1">
                             <span class="text-gray-300 font-medium">Estimasi Biaya:</span>
-                            <span class="text-xl font-bold text-green-600">Rp {{ number_format($nextMonthEstimate *
-                                $lastPurchase->price_per_unit, 0, ',', '.') }}</span>
+                            <span class="text-xl font-bold text-green-600">Rp {{ number_format($monthlyCost, 0, ',',
+                                '.') }}</span>
                         </div>
-                        <p class="text-xs text-gray-400 mt-1">{{ number_format($nextMonthEstimate, 2) }} kWh × Rp {{ number_format($lastPurchase->price_per_unit, 0, ',', '.') }}/kWh</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ number_format($nextMonthEstimate, 2) }} kWh × Rp {{ number_format($pricePerUnit, 0, ',', '.') }}/kWh</p>
                     </div>
                     <div class="p-4 bg-gray-700 rounded-lg">
                         <div class="flex justify-between items-center mb-1">

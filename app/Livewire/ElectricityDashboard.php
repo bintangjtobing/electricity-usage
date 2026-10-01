@@ -14,6 +14,8 @@ class ElectricityDashboard extends Component
     public $lastPurchase;
     public $lastCheck;
     public $remainingKwh = 0;
+    public $estimatedRemainingKwh = 0;
+    public $pricePerUnit = 0;
     public $dailyAverage = 0;
     public $kwhUsed = 0;
     public $daysSinceLastPurchase = 0;
@@ -52,6 +54,7 @@ class ElectricityDashboard extends Component
 
         $this->thresholdHemat = (float) $setting->threshold_hemat;
         $this->thresholdBoros = (float) $setting->threshold_boros;
+        $this->pricePerUnit = (float) $setting->price_per_unit;
 
         // Lokasi diambil dari Pengaturan (owner_name). Kalau masih placeholder
         // default ('-') pakai frasa generik supaya tidak tampil "di - kamu".
@@ -85,6 +88,10 @@ class ElectricityDashboard extends Component
 
         $this->calculateActualUsage();
 
+        // Proyeksi dihitung dari sisa SAAT INI, bukan angka pembacaan terakhir --
+        // kalau meteran terakhir dicek 5 hari lalu, pemakaian 5 hari itu sudah hilang.
+        $this->estimatedRemainingKwh = UsageCalculator::estimatedRemaining($this->lastCheck, $this->dailyAverage);
+
         if ($this->dailyAverage > 0) {
             $this->monthlyProjection = round($this->dailyAverage * 30, 2);
             // Biaya proyeksi memakai tarif yang berlaku sekarang, bukan tarif
@@ -96,7 +103,7 @@ class ElectricityDashboard extends Component
                 $this->tokenFrequency = round($this->monthlyProjection / $this->averagePurchaseAmount, 2);
             }
 
-            $this->daysUntilEmpty = (int) round($this->remainingKwh / $this->dailyAverage);
+            $this->daysUntilEmpty = (int) round($this->estimatedRemainingKwh / $this->dailyAverage);
             $this->estimatedEmptyDate = now()->addDays($this->daysUntilEmpty);
         }
 
@@ -107,10 +114,10 @@ class ElectricityDashboard extends Component
 
     private function calculateActualUsage()
     {
-        $stats = UsageCalculator::stats();
-
-        $this->kwhUsed = $stats['totalUsage'];
-        $this->dailyAverage = $stats['dailyAverage'];
+        // Total terpakai sepanjang riwayat; rata-rata harian dari jendela terbaru
+        // supaya proyeksi mengikuti pola pemakaian sekarang.
+        $this->kwhUsed = UsageCalculator::stats()['totalUsage'];
+        $this->dailyAverage = UsageCalculator::dailyAverage();
     }
 
     private function setUsageIndicator(Setting $setting)
@@ -141,7 +148,7 @@ class ElectricityDashboard extends Component
 
         $daysUntilPayday = (int) ceil($now->diffInHours($targetDate) / 24);
         $projectedUsage = $this->dailyAverage * $daysUntilPayday;
-        $remainingOnPayday = $this->remainingKwh - $projectedUsage;
+        $remainingOnPayday = $this->estimatedRemainingKwh - $projectedUsage;
 
         $this->projectionToPayday = [
             'paydayDay' => $payday,

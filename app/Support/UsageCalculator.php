@@ -15,6 +15,15 @@ use Carbon\Carbon;
 class UsageCalculator
 {
     /**
+     * Rata-rata untuk proyeksi hanya memakai sekian hari terakhir. Rata-rata
+     * sepanjang riwayat terseret data lama: di produksi, catatan April-Juli
+     * (hasil input awal, bukan bacaan meteran) menurunkannya ke 14,94 kWh/hari
+     * padahal tiap selang sejak Agustus konsisten ~17 -- "cukup 22 hari" yang
+     * kenyataannya cuma ~19.
+     */
+    public const RECENT_WINDOW_DAYS = 30;
+
+    /**
      * Pemakaian antara dua pembacaan meteran:
      *
      *     pemakaian = sisa_awal + pembelian_di_antaranya - sisa_akhir
@@ -22,11 +31,24 @@ class UsageCalculator
      * Rumus ini benar untuk semua kasus -- termasuk beberapa pembelian dalam
      * satu selang -- tanpa perlu menebak dari naik/turunnya angka.
      *
+     * Dengan $since, hitungan dimulai dari pembacaan terakhir pada/sebelum
+     * $since, supaya selang yang melintasi batas tetap terhitung utuh.
+     *
      * @return array{totalUsage: float, totalDays: float, dailyAverage: float}
      */
-    public static function stats(): array
+    public static function stats(?Carbon $since = null): array
     {
         $checks = ElectricityUsageCheck::orderBy('created_at', 'asc')->get();
+
+        if ($since) {
+            $anchor = $checks->last(fn ($check) => $check->created_at->lte($since));
+
+            if ($anchor) {
+                $checks = $checks
+                    ->filter(fn ($check) => $check->created_at->gte($anchor->created_at))
+                    ->values();
+            }
+        }
 
         if ($checks->count() < 2) {
             return ['totalUsage' => 0.0, 'totalDays' => 0.0, 'dailyAverage' => 0.0];
@@ -57,9 +79,29 @@ class UsageCalculator
         ];
     }
 
+    /** Rata-rata harian {@see RECENT_WINDOW_DAYS} hari terakhir, dasar semua proyeksi. */
     public static function dailyAverage(): float
     {
-        return self::stats()['dailyAverage'];
+        $lastCheck = ElectricityUsageCheck::latest()->first();
+
+        if (! $lastCheck) {
+            return 0.0;
+        }
+
+        return self::stats(
+            $lastCheck->created_at->copy()->subDays(self::RECENT_WINDOW_DAYS)
+        )['dailyAverage'];
+    }
+
+    /**
+     * Perkiraan sisa saat ini: pembacaan terakhir dikurangi pemakaian rata-rata
+     * sejak pembacaan itu. Meteran berhenti di nol, jadi tidak pernah negatif.
+     */
+    public static function estimatedRemaining(ElectricityUsageCheck $lastCheck, float $dailyAverage): float
+    {
+        $daysSince = Carbon::parse($lastCheck->created_at)->diffInHours(now()) / 24;
+
+        return max(0.0, round((float) $lastCheck->kwh_remaining - $dailyAverage * $daysSince, 2));
     }
 
     public static function usageBetween(ElectricityUsageCheck $prev, ElectricityUsageCheck $curr): float
