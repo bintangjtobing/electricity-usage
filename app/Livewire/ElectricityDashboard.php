@@ -141,17 +141,28 @@ class ElectricityDashboard extends Component
     {
         $now = now();
         $payday = $setting->payday_day;
+        $paydayEnd = max($payday, $setting->payday_day_end ?? $payday);
 
-        $targetDate = $now->copy()->day <= $payday
+        // Gajian berikutnya = rentang yang belum dimulai. Begitu tanggal awal
+        // tiba, gaji bulan ini dianggap sudah/segera masuk, jadi targetnya bulan
+        // depan. Proyeksi memakai tanggal terakhir rentang (skenario terburuk).
+        $windowStart = $now->day < $payday
             ? $now->copy()->startOfDay()->setDay($payday)
-            : $now->copy()->startOfDay()->addMonthNoOverflow()->setDay($payday);
+            : $now->copy()->startOfDay()->startOfMonth()->addMonthNoOverflow()->setDay($payday);
+        $targetDate = $windowStart->copy()->setDay($paydayEnd);
 
         $daysUntilPayday = (int) ceil($now->diffInHours($targetDate) / 24);
         $projectedUsage = $this->dailyAverage * $daysUntilPayday;
         $remainingOnPayday = $this->estimatedRemainingKwh - $projectedUsage;
 
+        $month = $targetDate->copy()->locale('id')->translatedFormat('F');
+
         $this->projectionToPayday = [
             'paydayDay' => $payday,
+            'paydayEnd' => $paydayEnd,
+            'isRange' => $paydayEnd > $payday,
+            // "1–4 November" atau "25 Oktober"
+            'label' => ($paydayEnd > $payday ? $payday . '–' . $paydayEnd : $payday) . ' ' . $month,
             // Nama bulan dalam bahasa Indonesia ("Oktober", bukan "October").
             'targetMonth' => $targetDate->copy()->locale('id')->translatedFormat('F'),
             'targetDate' => $targetDate->copy()->locale('id')->translatedFormat('j F Y'),
@@ -166,6 +177,9 @@ class ElectricityDashboard extends Component
     {
         return [
             'paydayDay' => $setting->payday_day,
+            'paydayEnd' => $setting->payday_day_end ?? $setting->payday_day,
+            'isRange' => false,
+            'label' => $setting->payday_day . ' ' . now()->locale('id')->translatedFormat('F'),
             'targetMonth' => now()->locale('id')->translatedFormat('F'),
             'targetDate' => now()->locale('id')->translatedFormat('j F Y'),
             'daysUntilPayday' => 0,

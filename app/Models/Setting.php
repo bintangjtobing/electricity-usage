@@ -13,6 +13,7 @@ class Setting extends Model
         'tariff_type',
         'price_per_unit',
         'payday_day',
+        'payday_day_end',
         'threshold_hemat',
         'threshold_boros',
         'low_kwh_alert',
@@ -21,6 +22,7 @@ class Setting extends Model
     protected $casts = [
         'price_per_unit' => 'float',
         'payday_day' => 'integer',
+        'payday_day_end' => 'integer',
         'threshold_hemat' => 'float',
         'threshold_boros' => 'float',
         'low_kwh_alert' => 'float',

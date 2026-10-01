@@ -68,7 +68,8 @@
                             $usageColor = $dailyAverage > $thresholdBoros ? 'text-red-400' : ($dailyAverage >= $thresholdHemat ? 'text-yellow-400' : 'text-green-400');
                             $usageLabel = $dailyAverage > $thresholdBoros ? 'cukup boros' : ($dailyAverage >= $thresholdHemat ? 'standar' : 'hemat');
                             $payday = $projectionToPayday;
-                            $paydayLabel = $payday['paydayDay'] . ' ' . $payday['targetMonth'];
+                            $paydayLabel = $payday['label'];
+                            $paydayNote = $payday['isRange'] ? ' (dihitung sampai tanggal ' . $payday['paydayEnd'] . ')' : '';
                             $emptyLabel = $estimatedEmptyDate ? $estimatedEmptyDate->copy()->locale('id')->translatedFormat('j F') : null;
                         @endphp
                         {{-- Dulu 5 paragraf panjang. Ringkas: sisa sekarang + kapan habis,
@@ -91,11 +92,11 @@
                             </p>
                             <p class="leading-relaxed mt-2 font-semibold">
                                 @if ($payday['remainingKwh'] < 0)
-                                    <span class="text-red-400">⚠️ Belum cukup sampai gajian {{ $paydayLabel }}: kurang sekitar {{ number_format(abs($payday['remainingKwh']), 0) }} kWh, jadi perlu beli token sebelum {{ $emptyLabel }}.</span>
+                                    <span class="text-red-400">⚠️ Belum cukup sampai gajian {{ $paydayLabel }}: kurang sekitar {{ number_format(abs($payday['remainingKwh']), 0) }} kWh{{ $paydayNote }}, jadi perlu beli token sebelum {{ $emptyLabel }}.</span>
                                 @elseif ($payday['needToBuy'])
-                                    <span class="text-yellow-400">⚠️ Saat gajian {{ $paydayLabel }} sisa tinggal sekitar {{ number_format($payday['remainingKwh'], 0) }} kWh. Sebaiknya beli token sebelum itu.</span>
+                                    <span class="text-yellow-400">⚠️ Saat gajian {{ $paydayLabel }} sisa tinggal sekitar {{ number_format($payday['remainingKwh'], 0) }} kWh{{ $paydayNote }}. Sebaiknya beli token sebelum itu.</span>
                                 @else
-                                    <span class="text-green-400">✓ Cukup sampai gajian {{ $paydayLabel }}, sisa sekitar {{ number_format($payday['remainingKwh'], 0) }} kWh.</span>
+                                    <span class="text-green-400">✓ Cukup sampai gajian {{ $paydayLabel }}, sisa sekitar {{ number_format($payday['remainingKwh'], 0) }} kWh{{ $paydayNote }}.</span>
                                 @endif
                             </p>
                         @endif

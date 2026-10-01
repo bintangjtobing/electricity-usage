@@ -106,10 +106,16 @@
                         </div>
                         <div>
                             <label for="payday_day" class="block text-sm font-medium text-gray-300 mb-2">Tanggal Gajian</label>
-                            <input type="number" id="payday_day" wire:model="payday_day" min="1" max="28"
-                                   class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 @error('payday_day') border-red-500 @enderror">
-                            <p class="mt-1 text-xs text-gray-400">Dipakai untuk proyeksi sisa kWh sampai gajian</p>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="payday_day" wire:model="payday_day" min="1" max="28" inputmode="numeric" aria-label="Tanggal gajian paling awal"
+                                       class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 @error('payday_day') border-red-500 @enderror">
+                                <span class="text-sm text-gray-400 shrink-0">s.d.</span>
+                                <input type="number" id="payday_day_end" wire:model="payday_day_end" min="1" max="28" inputmode="numeric" placeholder="opsional" aria-label="Tanggal gajian paling akhir"
+                                       class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 @error('payday_day_end') border-red-500 @enderror">
+                            </div>
+                            <p class="mt-1 text-xs text-gray-400">Kalau gajian berupa rentang (mis. 1 s.d. 4), proyeksi dihitung sampai tanggal terakhir supaya aman. Kosongkan kolom kedua kalau hanya satu tanggal.</p>
                             @error('payday_day') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                            @error('payday_day_end') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="low_kwh_alert" class="block text-sm font-medium text-gray-300 mb-2">Peringatan sisa rendah (kWh)</label>

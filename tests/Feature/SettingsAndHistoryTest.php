@@ -67,6 +67,30 @@ class SettingsAndHistoryTest extends TestCase
             ->assertHasErrors('threshold_boros');
     }
 
+    public function test_payday_range_is_validated_and_saved(): void
+    {
+        Livewire::test(SettingsForm::class)
+            ->set('payday_day', 4)
+            ->set('payday_day_end', 1)
+            ->call('save')
+            ->assertHasErrors('payday_day_end');
+
+        Livewire::test(SettingsForm::class)
+            ->set('payday_day', 1)
+            ->set('payday_day_end', 4)
+            ->call('save')
+            ->assertHasNoErrors();
+        $this->assertSame(4, Setting::current()->fresh()->payday_day_end);
+
+        // Sama dengan tanggal awal = satu tanggal saja.
+        Livewire::test(SettingsForm::class)
+            ->set('payday_day', 25)
+            ->set('payday_day_end', 25)
+            ->call('save')
+            ->assertHasNoErrors();
+        $this->assertNull(Setting::current()->fresh()->payday_day_end);
+    }
+
     public function test_a_mistyped_reading_can_be_corrected(): void
     {
         $check = ElectricityUsageCheck::forceCreate([

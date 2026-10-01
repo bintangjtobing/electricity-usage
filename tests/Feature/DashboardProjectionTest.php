@@ -67,4 +67,40 @@ class DashboardProjectionTest extends TestCase
         $this->assertSame(-380.0, $projection['remainingKwh']);
         $this->assertTrue($projection['needToBuy']);
     }
+
+    public function test_payday_range_projects_to_the_last_day_of_the_next_window(): void
+    {
+        // Gajian kini tanggal 1-4. Pada 1 Okt (sudah masuk rentang) gajian
+        // berikutnya 1-4 Nov, dan proyeksi memakai tanggal 4 (terburuk).
+        Setting::current()->update(['payday_day' => 1, 'payday_day_end' => 4]);
+        $this->travelTo('2026-10-01 12:00:00');
+        $this->check('2026-09-21 12:00:00', 300);
+        $this->check('2026-10-01 12:00:00', 500);
+        \App\Models\ElectricityPurchase::forceCreate([
+            'meter_number' => 'M1', 'owner_name' => 'X', 'tariff_type' => 'R1',
+            'purchase_price' => 500000, 'kwh_bought' => 400, 'price_per_unit' => 1250,
+            'created_at' => '2026-10-01 11:00:00', 'updated_at' => '2026-10-01 11:00:00',
+        ]);
+
+        $projection = Livewire::test(ElectricityDashboard::class)
+            ->assertSee('1–4 November')
+            ->assertSee('dihitung sampai tanggal 4')
+            ->get('projectionToPayday');
+
+        // 1 Okt 12:00 -> 4 Nov 00:00 = 33,5 hari -> 34; 20 kWh/hari.
+        $this->assertSame(34, $projection['daysUntilPayday']);
+        $this->assertSame(500.0 - 34 * 20, $projection['remainingKwh']);
+    }
+
+    public function test_before_the_window_the_target_is_this_month(): void
+    {
+        Setting::current()->update(['payday_day' => 25, 'payday_day_end' => 28]);
+        $this->travelTo('2026-10-10 08:00:00');
+        $this->check('2026-10-01 08:00:00', 300);
+        $this->check('2026-10-09 08:00:00', 140);
+
+        $projection = Livewire::test(ElectricityDashboard::class)->get('projectionToPayday');
+
+        $this->assertSame('25–28 Oktober', $projection['label']);
+    }
 }

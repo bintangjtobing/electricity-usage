@@ -13,6 +13,7 @@ class SettingsForm extends Component
     public $tariff_type;
     public $price_per_unit;
     public $payday_day;
+    public $payday_day_end;
     public $threshold_hemat;
     public $threshold_boros;
     public $low_kwh_alert;
@@ -30,6 +31,7 @@ class SettingsForm extends Component
             'tariff_type' => 'required|string|max:50',
             'price_per_unit' => 'required|numeric|min:1',
             'payday_day' => 'required|integer|min:1|max:28',
+            'payday_day_end' => 'nullable|integer|min:1|max:28|gte:payday_day',
             'threshold_hemat' => 'required|numeric|min:0',
             'threshold_boros' => 'required|numeric|gt:threshold_hemat',
             'low_kwh_alert' => 'required|numeric|min:0',
@@ -39,6 +41,8 @@ class SettingsForm extends Component
     protected $messages = [
         'threshold_boros.gt' => 'Ambang boros harus lebih besar dari ambang hemat.',
         'payday_day.max' => 'Pilih tanggal 1-28 agar selalu ada di setiap bulan.',
+        'payday_day_end.max' => 'Pilih tanggal 1-28 agar selalu ada di setiap bulan.',
+        'payday_day_end.gte' => 'Tanggal akhir gajian tidak boleh sebelum tanggal awal.',
     ];
 
     public function mount()
@@ -50,6 +54,7 @@ class SettingsForm extends Component
             'tariff_type',
             'price_per_unit',
             'payday_day',
+            'payday_day_end',
             'threshold_hemat',
             'threshold_boros',
             'low_kwh_alert',
@@ -78,6 +83,11 @@ class SettingsForm extends Component
 
     public function save()
     {
+        // Kosong atau sama dengan tanggal awal = gajian di satu tanggal saja.
+        if ($this->payday_day_end === '' || (int) $this->payday_day_end === (int) $this->payday_day) {
+            $this->payday_day_end = null;
+        }
+
         $this->validate();
 
         Setting::current()->update([
@@ -87,6 +97,7 @@ class SettingsForm extends Component
             'tariff_type' => $this->tariff_type,
             'price_per_unit' => $this->price_per_unit,
             'payday_day' => $this->payday_day,
+            'payday_day_end' => $this->payday_day_end,
             'threshold_hemat' => $this->threshold_hemat,
             'threshold_boros' => $this->threshold_boros,
             'low_kwh_alert' => $this->low_kwh_alert,
