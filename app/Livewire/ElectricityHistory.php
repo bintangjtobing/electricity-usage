@@ -112,6 +112,7 @@ class ElectricityHistory extends Component
             $purchase = ElectricityPurchase::findOrFail($this->editingId);
             $originalAt = $purchase->created_at->copy();
             $attachedChecks = $purchase->attachedChecks();
+            $kwhDelta = round((float) $this->edit_kwh - $purchase->kwh_bought, 2);
 
             $purchase->purchase_price = $this->edit_price;
             $purchase->kwh_bought = $this->edit_kwh;
@@ -123,13 +124,23 @@ class ElectricityHistory extends Component
             // Titik sisa sebelum/sesudah top-up ikut pindah tanggal. Kalau
             // tertinggal, kalkulator melihat saldo melonjak tanpa pembelian di
             // tanggal lama dan pembelian tanpa saldo naik di tanggal baru.
+            // Saldo sesudah top-up (= sebelum + dibeli) ikut koreksi kWh; saldo
+            // sebelum top-up dibaca dari meteran, jadi dibiarkan.
             $shift = $originalAt->diffInSeconds($purchase->created_at, false);
 
-            if ($shift !== 0) {
-                foreach ($attachedChecks as $check) {
-                    $check->created_at = $check->created_at->copy()->addSeconds($shift);
-                    $check->save();
+            foreach ($attachedChecks as $check) {
+                $isAfterTopUp = $check->created_at->gte($originalAt);
+
+                if ($shift === 0 && ($kwhDelta == 0 || ! $isAfterTopUp)) {
+                    continue;
                 }
+
+                if ($isAfterTopUp && $kwhDelta != 0) {
+                    $check->kwh_remaining = round($check->kwh_remaining + $kwhDelta, 2);
+                }
+
+                $check->created_at = $check->created_at->copy()->addSeconds($shift);
+                $check->save();
             }
         } elseif ($this->editingType === 'check') {
             $this->validate([

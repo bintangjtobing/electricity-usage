@@ -196,6 +196,37 @@ class PurchaseDateTest extends TestCase
         $this->assertSame(0, ElectricityPurchase::count());
     }
 
+    public function test_typing_receipt_kwh_keeps_the_nominal_and_derives_the_tariff(): void
+    {
+        // Faktur 1 Okt: Rp 500.000 -> 314,70 kWh. Dulu mengetik kWh menimpa
+        // nominal jadi kWh x tarif (Rp 500.080).
+        Livewire::test(ElectricityPurchaseForm::class)
+            ->call('setAmount', 500000)
+            ->assertSet('kwh_bought', 314.65)
+            ->set('kwh_bought', '314,70')
+            ->assertSet('purchase_price', 500000.0)
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $purchase = ElectricityPurchase::first();
+        $this->assertSame(500000.0, $purchase->purchase_price);
+        $this->assertSame(314.7, $purchase->kwh_bought);
+        $this->assertSame(1588.81, $purchase->price_per_unit);
+    }
+
+    public function test_kwh_typed_first_estimates_the_nominal_until_it_is_set(): void
+    {
+        Livewire::test(ElectricityPurchaseForm::class)
+            ->set('kwh_bought', '100')
+            ->assertSet('purchase_price', 158907.0)
+            ->set('kwh_bought', '200')
+            ->assertSet('purchase_price', 317814.0)
+            ->set('purchase_price_formatted', '300.000')
+            ->assertSet('kwh_bought', 188.79)
+            ->set('kwh_bought', '190')
+            ->assertSet('purchase_price', 300000.0);
+    }
+
     public function test_quick_amount_button_fills_price_and_kwh(): void
     {
         Livewire::test(ElectricityPurchaseForm::class)

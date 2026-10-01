@@ -147,6 +147,24 @@ class HistoryCalendarTest extends TestCase
         $this->assertSame('2026-09-24 08:00:00', $unrelated->fresh()->created_at->toDateTimeString());
     }
 
+    public function test_editing_purchase_kwh_corrects_the_after_top_up_balance(): void
+    {
+        $pre = $this->check('2026-10-01 12:08:35', 7.22);
+        $purchase = $this->purchase('2026-10-01 12:08:36');
+        $post = $this->check('2026-10-01 12:08:37', 321.87);
+
+        Livewire::test(ElectricityHistory::class)
+            ->call('editPurchase', $purchase->id)
+            ->set('edit_kwh', '314,70')
+            ->call('saveEdit')
+            ->assertHasNoErrors();
+
+        // Sesudah = sebelum + dibeli; sebelum dibaca dari meteran, tetap.
+        $this->assertSame(321.92, $post->fresh()->kwh_remaining);
+        $this->assertSame(7.22, $pre->fresh()->kwh_remaining);
+        $this->assertSame('2026-10-01 12:08:37', $post->fresh()->created_at->toDateTimeString());
+    }
+
     public function test_edit_accepts_indonesian_number_formats(): void
     {
         $purchase = $this->purchase('2026-10-01 12:00:00');

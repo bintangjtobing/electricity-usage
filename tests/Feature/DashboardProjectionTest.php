@@ -54,9 +54,12 @@ class DashboardProjectionTest extends TestCase
             ->assertSet('remainingKwh', 200.0)
             ->assertSet('estimatedRemainingKwh', 100.0)
             ->assertSet('daysUntilEmpty', 5)
-            ->assertSee('Dengan sisa sekitar')
+            ->assertSee('sekarang sekitar')
             ->assertSee('100.00 kWh')
-            ->assertSee('30 hari terakhir');
+            ->assertSee('(cek terakhir 200.00 kWh', false)
+            ->assertSee('30 hari terakhir')
+            ->assertSee('6 Oktober')
+            ->assertSee('kurang sekitar 380 kWh');
 
         // 25 Okt 00:00 dari 1 Okt 12:00 = 23,5 hari -> dibulatkan ke atas 24.
         $projection = $component->get('projectionToPayday');

@@ -101,13 +101,13 @@
                             kWh Didapat
                         </label>
                         <div class="relative">
-                            <input type="number"
+                            <input type="text"
                                    id="kwh_bought"
-                                   wire:model.live="kwh_bought"
-                                   step="0.01"
+                                   wire:model.live.debounce.400ms="kwh_bought"
                                    inputmode="decimal"
+                                   autocomplete="off"
                                    class="block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('kwh_bought') border-red-500 @enderror"
-                                   placeholder="157.32">
+                                   placeholder="314,70">
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                 <span class="text-gray-400 sm:text-sm">kWh</span>
                             </div>
@@ -115,7 +115,7 @@
                         @error('kwh_bought')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
-                        <p class="mt-1 text-xs text-gray-400">Akan otomatis terisi saat input harga</p>
+                        <p class="mt-1 text-xs text-gray-400">Terisi otomatis dari nominal. Kalau angka di struk berbeda, ubah di sini &mdash; nominal tidak ikut berubah.</p>
                     </div>
                 </div>
 
@@ -152,13 +152,14 @@
                 <!-- Price per Unit Display -->
                 <div class="bg-gray-700 rounded-lg p-4 border border-blue-500">
                     <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium text-blue-400">Harga per Unit (kWh)</span>
+                        <span class="text-sm font-medium text-blue-400">Tarif per kWh (Pengaturan)</span>
                         <span class="text-lg font-bold text-blue-400">Rp {{ number_format($price_per_unit, 2, ',', '.') }}</span>
                     </div>
                 </div>
 
                 <!-- Calculation Display -->
-                @if($purchase_price && $kwh_bought)
+                @php $effectiveRate = $this->effectiveRate(); @endphp
+                @if($effectiveRate)
                 <div class="bg-gray-700 rounded-lg p-4 border border-green-500">
                     <h4 class="text-sm font-medium text-green-400 mb-2">Ringkasan Pembelian</h4>
                     <div class="space-y-1 text-sm text-green-300">
@@ -168,13 +169,19 @@
                         </div>
                         <div class="flex justify-between">
                             <span>Jumlah kWh:</span>
-                            <span class="font-semibold">{{ number_format($kwh_bought, 2) }} kWh</span>
+                            <span class="font-semibold">{{ number_format($this->kwhValue(), 2) }} kWh</span>
                         </div>
                         <div class="flex justify-between border-t border-green-500 pt-1">
-                            <span>Harga per kWh:</span>
-                            <span class="font-semibold">Rp {{ number_format($price_per_unit, 2, ',', '.') }}</span>
+                            <span>Tarif struk ini:</span>
+                            <span class="font-semibold">Rp {{ number_format($effectiveRate, 2, ',', '.') }}/kWh</span>
                         </div>
                     </div>
+                    @if (abs($effectiveRate - (float) $price_per_unit) >= 0.01)
+                        <p class="mt-2 text-xs text-gray-300">
+                            Berbeda dari tarif di Pengaturan (Rp {{ number_format($price_per_unit, 2, ',', '.') }}).
+                            Kalau tarif PLN memang berubah, <a href="{{ route('settings') }}" class="underline text-blue-300 hover:text-blue-200">perbarui di Pengaturan</a>.
+                        </p>
+                    @endif
                 </div>
                 @endif
 

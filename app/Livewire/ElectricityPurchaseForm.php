@@ -22,6 +22,9 @@ class ElectricityPurchaseForm extends Component
     public $tariff_type;
     public $price_per_unit;
 
+    /** Nominal masih tebakan dari kWh (belum diisi user), jadi boleh ikut berubah. */
+    public $priceEstimated = false;
+
     /** Nominal yang paling sering dibeli, untuk tombol cepat. */
     public array $quickAmounts = [100000, 250000, 500000, 1000000];
 
@@ -39,6 +42,7 @@ class ElectricityPurchaseForm extends Component
         'purchase_date.before_or_equal' => 'Tanggal pembelian tidak boleh di masa depan.',
         'kwh_before_purchase.min' => 'Sisa kWh tidak boleh negatif.',
         'kwh_before_purchase.numeric' => 'Sisa kWh harus berupa angka, mis. 12,40 atau 12.40.',
+        'kwh_bought.numeric' => 'kWh harus berupa angka, mis. 314,70 atau 314.70.',
     ];
 
     public function mount()
@@ -68,23 +72,51 @@ class ElectricityPurchaseForm extends Component
         // Format with thousands separator
         $this->purchase_price_formatted = number_format($this->purchase_price, 0, ',', '.');
 
+        $this->priceEstimated = false;
+
         // Calculate kWh
         if ($this->purchase_price && $this->price_per_unit) {
             $this->kwh_bought = round($this->purchase_price / $this->price_per_unit, 2);
         }
     }
 
+    /**
+     * Nominal = uang yang benar-benar dibayar, jadi tidak diubah saat kWh
+     * diketik. Dulu kWh x tarif menimpa nominal: 500.000 tersimpan Rp 500.080.
+     * Kalau kWh di struk berbeda, yang menyesuaikan tarif pembelian ini.
+     * Hanya bila nominal belum diisi, nominal ditebak dari kWh.
+     */
     public function updatedKwhBought()
     {
-        if ($this->kwh_bought && $this->price_per_unit) {
-            $this->purchase_price = round($this->kwh_bought * $this->price_per_unit, 2);
+        $kwh = $this->kwhValue();
+
+        if ($kwh && $this->price_per_unit && (! $this->purchase_price || $this->priceEstimated)) {
+            $this->purchase_price = round($kwh * $this->price_per_unit);
             $this->purchase_price_formatted = number_format($this->purchase_price, 0, ',', '.');
+            $this->priceEstimated = true;
         }
+    }
+
+    /** kWh yang diketik (koma/titik) sebagai angka, atau null kalau belum valid. */
+    public function kwhValue(): ?float
+    {
+        $kwh = DecimalInput::normalize($this->kwh_bought);
+
+        return is_numeric($kwh) ? (float) $kwh : null;
+    }
+
+    /** Tarif efektif pembelian ini (nominal / kWh, sudah termasuk PPJ). */
+    public function effectiveRate(): ?float
+    {
+        $kwh = $this->kwhValue();
+
+        return $this->purchase_price && $kwh > 0 ? round($this->purchase_price / $kwh, 2) : null;
     }
 
     public function submit()
     {
         $this->kwh_before_purchase = DecimalInput::normalize($this->kwh_before_purchase);
+        $this->kwh_bought = DecimalInput::normalize($this->kwh_bought);
 
         $this->validate();
 
@@ -100,7 +132,8 @@ class ElectricityPurchaseForm extends Component
             'purchase_price' => $this->purchase_price,
             'kwh_bought' => $this->kwh_bought,
             'kwh_before_purchase' => $this->kwh_before_purchase,
-            'price_per_unit' => $this->price_per_unit,
+            // Tarif sebenarnya dari struk ini, bukan salinan Pengaturan.
+            'price_per_unit' => round($this->purchase_price / $this->kwh_bought, 2),
         ]);
         $purchase->created_at = $purchasedAt;
         $purchase->updated_at = $purchasedAt;
@@ -135,7 +168,7 @@ class ElectricityPurchaseForm extends Component
         }
 
         session()->flash('message', 'Pembelian listrik berhasil dicatat!');
-        $this->reset(['purchase_price', 'purchase_price_formatted', 'kwh_bought', 'kwh_before_purchase']);
+        $this->reset(['purchase_price', 'purchase_price_formatted', 'kwh_bought', 'kwh_before_purchase', 'priceEstimated']);
         $this->purchase_date = now()->format('Y-m-d');
 
         $this->dispatch('refresh-dashboard');

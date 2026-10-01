@@ -63,50 +63,42 @@
                     </div>
                     <div class="flex-1">
                         <h3 class="text-lg font-semibold text-white mb-2">Hai Bintang! 👋</h3>
-                        <p class="text-gray-300 leading-relaxed">
-                            Saya asisten pribadimu untuk memantau pemakaian listrik token di
-                            <span class="font-semibold">{{ $locationLabel }}</span> saat ini.
-                            Saya melihat bahwa kamu membeli token terakhir kali tanggal <span class="font-semibold">{{
-                                $lastPurchase->created_at->format('d/m/Y') }}</span>,
-                            dengan sisa listrik (kWh) sebesar <span class="font-semibold">{{
-                                number_format($remainingKwh, 2) }}</span>.
-                        </p>
                         @php
                             // Ambil ambang dari Pengaturan supaya sama persis dengan badge indikator.
                             $usageColor = $dailyAverage > $thresholdBoros ? 'text-red-400' : ($dailyAverage >= $thresholdHemat ? 'text-yellow-400' : 'text-green-400');
                             $usageLabel = $dailyAverage > $thresholdBoros ? 'cukup boros' : ($dailyAverage >= $thresholdHemat ? 'standar' : 'hemat');
+                            $payday = $projectionToPayday;
+                            $paydayLabel = $payday['paydayDay'] . ' ' . $payday['targetMonth'];
+                            $emptyLabel = $estimatedEmptyDate ? $estimatedEmptyDate->copy()->locale('id')->translatedFormat('j F') : null;
                         @endphp
-                        <p class="text-gray-300 leading-relaxed mt-3">
-                            Rata-rata pemakaian harian kamu sekitar <span
-                                class="font-semibold {{ $usageColor }}">{{ number_format($dailyAverage, 2) }} kWh/hari</span>,
-                            yang berarti ini tergolong <span class="font-semibold {{ $usageColor }}">{{ $usageLabel }}</span>.
-                            Angka ini dihitung dari {{ \App\Support\UsageCalculator::RECENT_WINDOW_DAYS }} hari terakhir (kWh terpakai dibagi jumlah hari), supaya perkiraan di bawah mengikuti pola pemakaianmu sekarang.
-                        </p>
-                        <p class="text-gray-300 leading-relaxed mt-3">
-                            Kalau pola ini bertahan, perkiraan pemakaian dalam <span class="font-semibold">sebulan (30 hari)</span> sekitar
-                            <span class="font-semibold text-blue-300">{{ number_format($monthlyProjection, 2) }} kWh</span>,
-                            atau setara sekitar <span class="font-semibold text-green-400">Rp {{ number_format($monthlyCost, 0, ',', '.') }}</span>.
-                        </p>
-                        <p class="text-gray-300 leading-relaxed mt-3">
-                            Dengan sisa sekitar <span class="font-semibold">{{ number_format($estimatedRemainingKwh, 2) }} kWh</span> saat ini, listrikmu diperkirakan cukup untuk
-                            @if($dailyAverage > 0)
-                                sekitar <span class="font-semibold">{{ $daysUntilEmpty }} hari lagi</span>
-                                (kira-kira sampai <span class="font-semibold">{{ optional($estimatedEmptyDate)->locale('id')->translatedFormat('j F Y') }}</span>).
+                        {{-- Dulu 5 paragraf panjang. Ringkas: sisa sekarang + kapan habis,
+                             biaya sebulan, lalu status sampai gajian. --}}
+                        <p class="text-gray-300 leading-relaxed">
+                            Sisa listrik di <span class="font-semibold">{{ $locationLabel }}</span> sekarang sekitar
+                            <span class="font-semibold text-white">{{ number_format($estimatedRemainingKwh, 2) }} kWh</span>@if (abs($estimatedRemainingKwh - $remainingKwh) >= 0.01)<span class="text-sm text-gray-500"> (cek terakhir {{ number_format($remainingKwh, 2) }} kWh, {{ $lastCheck->created_at->copy()->locale('id')->translatedFormat('j M H:i') }})</span>@endif.
+                            @if ($dailyAverage > 0)
+                                Dengan pemakaian <span class="font-semibold {{ $usageColor }}">{{ number_format($dailyAverage, 2) }} kWh/hari</span>
+                                (<span class="{{ $usageColor }}">{{ $usageLabel }}</span>, rata-rata {{ \App\Support\UsageCalculator::RECENT_WINDOW_DAYS }} hari terakhir),
+                                listrik diperkirakan habis sekitar <span class="font-semibold text-white">{{ $emptyLabel }}</span> ({{ $daysUntilEmpty }} hari lagi).
                             @else
-                                beberapa waktu ke depan (belum cukup data untuk estimasi harian).
+                                Data pengecekan belum cukup untuk memperkirakan kapan habis.
                             @endif
                         </p>
-                        <p class="text-gray-300 leading-relaxed mt-3">
-                            Menuju tanggal gajian berikutnya, yaitu <span class="font-semibold">{{ $projectionToPayday['paydayDay'] }} {{ $projectionToPayday['targetMonth'] }}</span>
-                            (sekitar <span class="font-semibold">{{ $projectionToPayday['daysUntilPayday'] }} hari lagi</span>),
-                            sisa listrik diperkirakan tinggal <span
-                                class="font-semibold {{ $projectionToPayday['remainingKwh'] < 20 ? 'text-red-400' : 'text-green-400' }}">{{
-                                number_format($projectionToPayday['remainingKwh'], 2) }} kWh</span>.
-                            Ini cuma perkiraan berdasarkan rata-rata, ya.
-                            @if($projectionToPayday['needToBuy'])
-                            <span class="text-red-400 font-semibold">⚠️ Kemungkinan kamu perlu beli token sebelum tanggal gajian!</span>
-                            @endif
-                        </p>
+                        @if ($dailyAverage > 0)
+                            <p class="text-gray-300 leading-relaxed mt-2">
+                                Perkiraan sebulan: <span class="font-semibold text-blue-300">{{ number_format($monthlyProjection, 2) }} kWh</span>
+                                &asymp; <span class="font-semibold text-green-400">Rp {{ number_format($monthlyCost, 0, ',', '.') }}</span>.
+                            </p>
+                            <p class="leading-relaxed mt-2 font-semibold">
+                                @if ($payday['remainingKwh'] < 0)
+                                    <span class="text-red-400">⚠️ Belum cukup sampai gajian {{ $paydayLabel }}: kurang sekitar {{ number_format(abs($payday['remainingKwh']), 0) }} kWh, jadi perlu beli token sebelum {{ $emptyLabel }}.</span>
+                                @elseif ($payday['needToBuy'])
+                                    <span class="text-yellow-400">⚠️ Saat gajian {{ $paydayLabel }} sisa tinggal sekitar {{ number_format($payday['remainingKwh'], 0) }} kWh. Sebaiknya beli token sebelum itu.</span>
+                                @else
+                                    <span class="text-green-400">✓ Cukup sampai gajian {{ $paydayLabel }}, sisa sekitar {{ number_format($payday['remainingKwh'], 0) }} kWh.</span>
+                                @endif
+                            </p>
+                        @endif
                     </div>
                 </div>
             </div>
