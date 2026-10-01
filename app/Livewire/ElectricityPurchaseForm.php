@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\ElectricityPurchase;
 use App\Models\ElectricityUsageCheck;
 use App\Models\Setting;
+use App\Support\DecimalInput;
 use Carbon\Carbon;
 use Livewire\Component;
 
@@ -83,7 +84,7 @@ class ElectricityPurchaseForm extends Component
 
     public function submit()
     {
-        $this->kwh_before_purchase = $this->normalizeDecimal($this->kwh_before_purchase);
+        $this->kwh_before_purchase = DecimalInput::normalize($this->kwh_before_purchase);
 
         $this->validate();
 
@@ -138,31 +139,6 @@ class ElectricityPurchaseForm extends Component
         $this->purchase_date = now()->format('Y-m-d');
 
         $this->dispatch('refresh-dashboard');
-    }
-
-    /**
-     * Input teks bebas -> string angka bertitik, atau null kalau kosong.
-     *
-     * Input sengaja bukan type="number": keyboard HP berlokal Indonesia mengetik
-     * koma, dan browser lalu mengirim '' (yang ditolak MySQL strict untuk kolom
-     * decimal). Koma maupun titik diterima; kalau keduanya ada, yang terakhir
-     * dianggap desimal ("1.234,5" -> "1234.5"). Teks bukan angka dibiarkan
-     * supaya ditolak validasi numeric.
-     */
-    private function normalizeDecimal($value): ?string
-    {
-        $value = str_replace(' ', '', (string) $value);
-
-        if ($value === '') {
-            return null;
-        }
-
-        if (str_contains($value, ',') && str_contains($value, '.')) {
-            $thousands = strrpos($value, ',') > strrpos($value, '.') ? '.' : ',';
-            $value = str_replace($thousands, '', $value);
-        }
-
-        return str_replace(',', '.', $value);
     }
 
     /** Simpan satu titik pembacaan meteran pada waktu tertentu. */

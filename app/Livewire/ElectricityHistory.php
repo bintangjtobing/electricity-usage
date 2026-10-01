@@ -4,17 +4,18 @@ namespace App\Livewire;
 
 use App\Models\ElectricityPurchase;
 use App\Models\ElectricityUsageCheck;
+use App\Models\Setting;
+use App\Support\DecimalInput;
+use App\Support\UsageCalendar;
 use Carbon\Carbon;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class ElectricityHistory extends Component
 {
-    use WithPagination;
+    /** Bulan yang ditampilkan di kalender, format Y-m. */
+    public $month;
 
-    public $activeTab = 'purchases';
-
-    /** Baris yang sedang diedit; null bila tidak ada. */
+    /** Data yang sedang diedit; null bila tidak ada. */
     public $editingType = null;
     public $editingId = null;
 
@@ -26,20 +27,38 @@ class ElectricityHistory extends Component
     public $confirmingDeleteType = null;
     public $confirmingDeleteId = null;
 
-    public function updatedActiveTab()
+    public function mount()
     {
+        $this->month = now()->format('Y-m');
+    }
+
+    public function previousMonth()
+    {
+        $this->month = $this->currentMonth()->subMonthNoOverflow()->format('Y-m');
         $this->cancelEdit();
-        $this->resetPage();
+    }
+
+    public function nextMonth()
+    {
+        $this->month = $this->currentMonth()->addMonthNoOverflow()->format('Y-m');
+        $this->cancelEdit();
+    }
+
+    public function goToToday()
+    {
+        $this->month = now()->format('Y-m');
+        $this->cancelEdit();
     }
 
     public function editPurchase($id)
     {
         $purchase = ElectricityPurchase::findOrFail($id);
 
+        $this->cancelDelete();
         $this->editingType = 'purchase';
         $this->editingId = $id;
         $this->edit_date = $purchase->created_at->format('Y-m-d');
-        $this->edit_price = $purchase->purchase_price;
+        $this->edit_price = number_format($purchase->purchase_price, 0, ',', '.');
         $this->edit_kwh = $purchase->kwh_bought;
     }
 
@@ -47,6 +66,7 @@ class ElectricityHistory extends Component
     {
         $check = ElectricityUsageCheck::findOrFail($id);
 
+        $this->cancelDelete();
         $this->editingType = 'check';
         $this->editingId = $id;
         $this->edit_date = $check->created_at->format('Y-m-d');
@@ -55,6 +75,14 @@ class ElectricityHistory extends Component
 
     public function saveEdit()
     {
+        // Nominal Rupiah: titik/koma hanya pemisah ribuan. kWh: koma maupun
+        // titik boleh jadi desimal (keyboard HP berlokal Indonesia).
+        $this->edit_price = $this->edit_price === null || $this->edit_price === ''
+            ? null
+            : preg_replace('/\D/', '', (string) $this->edit_price);
+        $this->edit_kwh = DecimalInput::normalize($this->edit_kwh);
+        $this->edit_remaining = DecimalInput::normalize($this->edit_remaining);
+
         if ($this->editingType === 'purchase') {
             $this->validate([
                 'edit_date' => 'required|date|before_or_equal:today',
@@ -63,13 +91,27 @@ class ElectricityHistory extends Component
             ]);
 
             $purchase = ElectricityPurchase::findOrFail($this->editingId);
+            $originalAt = $purchase->created_at->copy();
+            $attachedChecks = $purchase->attachedChecks();
 
             $purchase->purchase_price = $this->edit_price;
             $purchase->kwh_bought = $this->edit_kwh;
             // Tarif ikut dihitung ulang supaya tetap konsisten dengan nominal & kWh.
             $purchase->price_per_unit = round($this->edit_price / $this->edit_kwh, 2);
-            $purchase->created_at = Carbon::parse($this->edit_date)->setTimeFrom($purchase->created_at);
+            $purchase->created_at = Carbon::parse($this->edit_date)->setTimeFrom($originalAt);
             $purchase->save();
+
+            // Titik sisa sebelum/sesudah top-up ikut pindah tanggal. Kalau
+            // tertinggal, kalkulator melihat saldo melonjak tanpa pembelian di
+            // tanggal lama dan pembelian tanpa saldo naik di tanggal baru.
+            $shift = $originalAt->diffInSeconds($purchase->created_at, false);
+
+            if ($shift !== 0) {
+                foreach ($attachedChecks as $check) {
+                    $check->created_at = $check->created_at->copy()->addSeconds($shift);
+                    $check->save();
+                }
+            }
         } elseif ($this->editingType === 'check') {
             $this->validate([
                 'edit_date' => 'required|date|before_or_equal:today',
@@ -88,6 +130,7 @@ class ElectricityHistory extends Component
         $this->cancelEdit();
         session()->flash('message', 'Data berhasil diperbarui.');
         $this->dispatch('refresh-dashboard');
+        $this->dispatch('history-updated');
     }
 
     public function cancelEdit()
@@ -98,6 +141,7 @@ class ElectricityHistory extends Component
 
     public function confirmDelete($type, $id)
     {
+        $this->cancelEdit();
         $this->confirmingDeleteType = $type;
         $this->confirmingDeleteId = $id;
     }
@@ -118,13 +162,28 @@ class ElectricityHistory extends Component
         $this->cancelDelete();
         session()->flash('message', 'Data berhasil dihapus.');
         $this->dispatch('refresh-dashboard');
+        $this->dispatch('history-updated');
+    }
+
+    /** Properti publik bisa diubah dari browser; nilai rusak kembali ke bulan ini. */
+    private function currentMonth(): Carbon
+    {
+        if (! is_string($this->month) || ! preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $this->month)) {
+            $this->month = now()->format('Y-m');
+        }
+
+        return Carbon::createFromFormat('Y-m-d', $this->month . '-01')->startOfDay();
     }
 
     public function render()
     {
+        $setting = Setting::current();
+
         return view('livewire.electricity-history', [
-            'purchases' => ElectricityPurchase::latest()->paginate(10, ['*'], 'purchasePage'),
-            'checks' => ElectricityUsageCheck::latest()->paginate(10, ['*'], 'checkPage'),
+            'calendar' => UsageCalendar::month($this->currentMonth()),
+            'weekdays' => UsageCalendar::WEEKDAYS,
+            'thresholdHemat' => (float) $setting->threshold_hemat,
+            'thresholdBoros' => (float) $setting->threshold_boros,
         ]);
     }
 }

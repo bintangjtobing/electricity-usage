@@ -78,7 +78,6 @@ class SettingsAndHistoryTest extends TestCase
         ]);
 
         Livewire::test(ElectricityHistory::class)
-            ->set('activeTab', 'checks')
             ->call('editCheck', $check->id)
             ->set('edit_remaining', 42.5)
             ->call('saveEdit')
